@@ -17,8 +17,8 @@ export const NETWORK_CURRENCY: Record<number, string> = {
   100: 'xDAI',
   137: 'MATIC',
   42161: 'ETH',
-  11155111: 'SEPETH',
-  17000: 'HOLETH',
+  11155111: 'SepoliaETH',
+  17000: 'HoleskyETH',
   31337: 'HardhatETH',
 };
 
@@ -67,6 +67,8 @@ export const validateSetup = async (): Promise<SetupValues> => {
     throw new Error('Provider not found for network');
   }
   const { chainId } = await deployer.provider.getNetwork();
+  console.log('Chain ID:', chainId);
+  console.log('Network:', NETWORK_NAME[chainId]);
   if (!Object.keys(NETWORK_NAME).includes(chainId.toString())) {
     throw new Error('Unsupported network');
   }

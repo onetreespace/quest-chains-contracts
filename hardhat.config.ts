@@ -66,6 +66,10 @@ const config: HardhatUserConfig = {
       url: 'https://1rpc.io/sepolia',
       accounts,
     },
+    holesky: {
+      url: 'https://1rpc.io/holesky',
+      accounts,
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS === 'true',
@@ -78,7 +82,18 @@ const config: HardhatUserConfig = {
       gnosis: process.env.GNOSISSCAN_API_KEY!,
       arbitrumOne: process.env.ARBISCAN_API_KEY!,
       sepolia: process.env.ETHERSCAN_API_KEY!,
+      holesky: process.env.ETHERSCAN_API_KEY!,
     },
+    customChains: [
+      {
+        network: 'holesky',
+        chainId: 17000,
+        urls: {
+          apiURL: 'https://api-holesky.etherscan.io/api',
+          browserURL: 'https://holesky.etherscan.io',
+        },
+      },
+    ],
   },
   typechain: {
     outDir: 'types',

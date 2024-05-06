@@ -1,0 +1,9 @@
+{
+  "network": "holesky",
+  "version": "277cd6d",
+  "factory": "0x415E67D2e2710b246B99492ceC89cC90Af81931a",
+  "token": "0xb42b86f0163cEA9704DEDE197578c04c3DF67498",
+  "template": "0x4CD7BeAe668ed7c7803b787ba9B84cE17135646b",
+  "txHash": "0xcefe2129e6e6dd44bd74801ebadaa9bb47077cd7f9af58cc37c4878d25276233",
+  "blockNumber": "1487745"
+}
