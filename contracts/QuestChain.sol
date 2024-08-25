@@ -47,8 +47,9 @@ contract QuestChain is
     /// @notice Address of the limiter contract, if any.
     address public limiterContract;
 
-    /// @notice Mapping from quest ID to quest details.
-    mapping(uint256 => QuestDetails) public questDetails;
+    /// @notice Array of quests.
+    QuestDetails[] public questDetails;
+
     /// @notice Mapping from user address to a mapping of quest ID to quest completion status.
     mapping(address => mapping(uint256 => QuestStatus)) private _questStatus;
 
