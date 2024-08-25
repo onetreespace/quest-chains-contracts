@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 //   ╔═╗ ┬ ┬┌─┐┌─┐┌┬┐╔═╗┬ ┬┌─┐┬┌┐┌┌─┐
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
@@ -29,8 +29,6 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     IQuestChainToken public immutable questChainToken;
     // immutable template contract address for quest chain
     address public immutable questChainTemplate;
-    // immutable DAO treasury address
-    address public immutable treasury;
 
     // counter for all quest chains
     uint256 public questChainCount = 0;
@@ -41,20 +39,6 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     address public proposedAdmin;
     // timestamp of last admin proposal
     uint256 public adminProposalTimestamp;
-
-    // ERC20 token address for payments
-    IERC20Token public paymentToken;
-    // proposed payment token address
-    address public proposedPaymentToken;
-    // timestamp of last paymentToken proposal
-    uint256 public paymentTokenProposalTimestamp;
-
-    // cost to upgrade quest chains
-    uint256 public upgradeFee;
-    // proposed upgrade fee
-    uint256 public proposedUpgradeFee;
-    // timestamp of last upgrade fee proposal
-    uint256 public upgradeFeeProposalTimestamp;
 
     uint256 private constant ONE_DAY = 86400;
 
@@ -107,33 +91,16 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
 
     constructor(
         address _template,
-        address _admin,
-        address _treasury,
-        address _paymentToken,
-        uint256 _upgradeFee
-    )
-        nonZeroAddr(_template)
-        nonZeroAddr(_admin)
-        nonZeroAddr(_treasury)
-        nonZeroAddr(_paymentToken)
-    {
+        address _admin
+    ) nonZeroAddr(_template) nonZeroAddr(_admin) {
         // deploy the Quest Chain Token and store it's address
         questChainToken = new QuestChainToken();
 
         // set the quest chain template contract
         questChainTemplate = _template;
 
-        // set the DAO treasury address
-        treasury = _treasury;
-
         // set the admin address
         admin = _admin;
-
-        // set the payment token address
-        paymentToken = IERC20Token(_paymentToken);
-
-        // set the quest chain upgrade fee
-        upgradeFee = _upgradeFee;
 
         // log constructor data
         emit FactorySetup();
@@ -185,80 +152,6 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     }
 
     /**
-     * @dev Proposes a new paymentToken address
-     * @param _paymentToken the address of the new paymentToken
-     */
-    function proposePaymentTokenReplace(
-        address _paymentToken
-    )
-        external
-        onlyAdmin
-        nonZeroAddr(_paymentToken)
-        mustChangeAddr(proposedPaymentToken, _paymentToken)
-    {
-        // set proposed paymentToken address
-        proposedPaymentToken = _paymentToken;
-        paymentTokenProposalTimestamp = block.timestamp;
-
-        // log proposedPaymentToken change data
-        emit PaymentTokenReplaceProposed(_paymentToken);
-    }
-
-    /**
-     * @dev Executes the proposed paymentToken replacement
-     */
-    function executePaymentTokenReplace()
-        external
-        onlyAdmin
-        nonZeroAddr(proposedPaymentToken)
-        onlyAfterDelay(paymentTokenProposalTimestamp)
-        mustChangeAddr(proposedPaymentToken, address(paymentToken))
-    {
-        // replace paymentToken
-        paymentToken = IERC20Token(proposedPaymentToken);
-
-        delete proposedPaymentToken;
-        delete paymentTokenProposalTimestamp;
-
-        // log paymentToken change data
-        emit PaymentTokenReplaced(paymentToken);
-    }
-
-    /**
-     * @dev Proposes a new upgradeFee
-     * @param _upgradeFee the new upgradeFee
-     */
-    function proposeUpgradeFeeReplace(
-        uint256 _upgradeFee
-    ) external onlyAdmin mustChangeUint(proposedUpgradeFee, _upgradeFee) {
-        // set proposed upgradeFee
-        proposedUpgradeFee = _upgradeFee;
-        upgradeFeeProposalTimestamp = block.timestamp;
-
-        // log proposedUpgradeFee change data
-        emit UpgradeFeeReplaceProposed(_upgradeFee);
-    }
-
-    /**
-     * @dev Executes the proposed upgradeFee replacement
-     */
-    function executeUpgradeFeeReplace()
-        external
-        onlyAdmin
-        onlyAfterDelay(upgradeFeeProposalTimestamp)
-        mustChangeUint(proposedUpgradeFee, upgradeFee)
-    {
-        // replace upgradeFee
-        upgradeFee = proposedUpgradeFee;
-
-        delete proposedUpgradeFee;
-        delete upgradeFeeProposalTimestamp;
-
-        // log upgradeFee change data
-        emit UpgradeFeeReplaced(upgradeFee);
-    }
-
-    /**
      * @dev Deploys a new quest chain minimal proxy
      * @param _info the initialization data struct for our new clone
      * @param _salt an arbitrary source of entropy
@@ -269,69 +162,6 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     ) external returns (address) {
         // deploy new quest chain minimal proxy
         return _create(_info, _salt);
-    }
-
-    /**
-     * @dev Deploys a new quest chain minimal proxy and runs an upgrade
-     * @param _info the initialization data struct for our new clone
-     * @param _salt an arbitrary source of entropy
-     */
-    function createAndUpgrade(
-        QuestChainCommons.QuestChainInfo calldata _info,
-        bytes32 _salt
-    ) external nonReentrant returns (address) {
-        // deploy new quest chain minimal proxy
-        address questChainAddress = _create(_info, _salt);
-
-        // upgrade new quest chain and transfer upgrade fee to treasury
-        _upgradeQuestChain(questChainAddress);
-        return questChainAddress;
-    }
-
-    /**
-     * @dev Deploys a new quest chain minimal proxy and runs an upgrade while permitting upgrade fee
-     * @param _info the initialization data struct for our new clone
-     * @param _salt an arbitrary source of entropy
-     * @param _deadline the timestamp where permit expires
-     * @param _signature the ERC20 permit signature
-     */
-    function createAndUpgradeWithPermit(
-        QuestChainCommons.QuestChainInfo calldata _info,
-        bytes32 _salt,
-        uint256 _deadline,
-        bytes calldata _signature
-    ) external nonReentrant returns (address) {
-        // deploy new quest chain minimal proxy
-        address questChainAddress = _create(_info, _salt);
-
-        // upgrade new quest chain and permit fee
-        _upgradeQuestChainWithPermit(questChainAddress, _deadline, _signature);
-        return questChainAddress;
-    }
-
-    /**
-     * @dev Upgrades an existing quest chain contract
-     * @param _questChainAddress the quest chain contract to be upgraded
-     */
-    function upgradeQuestChain(
-        address _questChainAddress
-    ) external nonReentrant {
-        // upgrade new quest chain and transfer upgrade fee to treasury
-        _upgradeQuestChain(_questChainAddress);
-    }
-
-    /**
-     * @dev Upgrades an existing quest chain contract
-     * @param _questChainAddress the quest chain contract to be upgraded
-     * @param _deadline the timestamp where permit expires
-     * @param _signature the ERC20 permit signature
-     */
-    function upgradeQuestChainWithPermit(
-        address _questChainAddress,
-        uint256 _deadline,
-        bytes calldata _signature
-    ) external nonReentrant {
-        _upgradeQuestChainWithPermit(_questChainAddress, _deadline, _signature);
     }
 
     /**
@@ -393,51 +223,5 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
 
         // increment quest chain counter
         questChainCount++;
-    }
-
-    /**
-     * @dev Internal function upgrades an existing quest chain and transfers upgrade fee to treasury
-     * @param _questChainAddress the new minimal proxy's address
-     */
-    function _upgradeQuestChain(address _questChainAddress) internal {
-        // transfer upgrade fee to the treasury from caller
-        paymentToken.safeTransferFrom(msg.sender, treasury, upgradeFee);
-
-        // assign quest chain as premium
-        IQuestChain(_questChainAddress).upgrade();
-
-        // log quest chain premium upgrade data
-        emit QuestChainUpgraded(msg.sender, _questChainAddress);
-    }
-
-    /**
-     * @dev Internal function upgrades an existing quest chain and permits upgrade fee
-     * @param _questChainAddress the new minimal proxy's address
-     * @param _deadline the timestamp permit expires upon
-     * @param _signature the ERC20Permit signature
-     */
-    function _upgradeQuestChainWithPermit(
-        address _questChainAddress,
-        uint256 _deadline,
-        bytes calldata _signature
-    ) internal {
-        // recover signature parameters
-        (uint8 v, bytes32 r, bytes32 s) = QuestChainCommons.recoverParameters(
-            _signature
-        );
-
-        // permit upgrade fee
-        paymentToken.safePermit(
-            msg.sender,
-            address(this),
-            upgradeFee,
-            _deadline,
-            v,
-            r,
-            s
-        );
-
-        // upgrade the quest chain to premium
-        _upgradeQuestChain(_questChainAddress);
     }
 }

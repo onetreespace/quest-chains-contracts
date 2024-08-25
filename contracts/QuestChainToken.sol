@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.8.16;
+pragma solidity ^0.8.26;
 
 //   ╔═╗ ┬ ┬┌─┐┌─┐┌┬┐╔═╗┬ ┬┌─┐┬┌┐┌┌─┐
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
@@ -9,8 +9,9 @@ pragma solidity 0.8.16;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-import "./interfaces/IQuestChain.sol";
-import "./interfaces/IQuestChainToken.sol";
+import {IQuestChain} from "./interfaces/IQuestChain.sol";
+import {IQuestChainToken} from "./interfaces/IQuestChainToken.sol";
+import {IQuestChainFactory} from "./interfaces/IQuestChainFactory.sol";
 
 // author: @dan13ram
 
