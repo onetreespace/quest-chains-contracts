@@ -191,7 +191,7 @@ contract QuestChain is
                 revert QuestNotFound(_questIdList[i]);
 
             questDetails[_questIdList[i]] = QuestDetails(
-                _questDetails[i].paused,
+                _questDetails[i].disabled,
                 _questDetails[i].optional,
                 _questDetails[i].skipReview
             );
@@ -283,7 +283,7 @@ contract QuestChain is
         for (uint256 _questId; _questId < questCount; ++_questId) {
             if (
                 !questDetails[_questId].optional &&
-                !questDetails[_questId].paused &&
+                !questDetails[_questId].disabled &&
                 _questStatus[_msgSender()][_questId] != QuestStatus.pass
             ) revert ChainIncomplete();
 
@@ -357,7 +357,7 @@ contract QuestChain is
     /// @dev Internal function to submit proof for a quest.
     /// @param _questId The ID of the quest.
     function _submitProof(uint256 _questId) internal validQuest(_questId) {
-        if (questDetails[_questId].paused) revert QuestPaused(_questId);
+        if (questDetails[_questId].disabled) revert QuestDisabled(_questId);
         if (_questStatus[_msgSender()][_questId] == QuestStatus.pass)
             revert AlreadyPassed(_questId);
 

@@ -21,7 +21,10 @@ enum QuestStatus {
 /// @notice Structure for holding quest details.
 /// @dev Includes information about whether the quest is paused, optional, or can skip review.
 struct QuestDetails {
-    bool paused; // Indicates if the quest is paused.
+    // uint256 order; // The order of the quest in the chain.
+    // bool assignment; // Indicates if the quest is an assignment.
+    // uint256[] requiredQuests; // List of quest IDs required to complete this quest.
+    bool disabled; // Indicates if the quest is paused.
     bool optional; // Indicates if the quest is optional.
     bool skipReview; // Indicates if the quest can skip the review process.
 }
@@ -196,7 +199,7 @@ interface IQuestChainSignals {
 
     /// @notice Error thrown when a quest is paused.
     /// @param questId The paused quest ID.
-    error QuestPaused(uint256 questId);
+    error QuestDisabled(uint256 questId);
 
     /// @notice Error thrown when a quest has already been passed.
     /// @param questId The quest ID that has already been passed.
