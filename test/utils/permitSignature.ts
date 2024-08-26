@@ -1,28 +1,29 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumberish, constants } from 'ethers';
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
+import { ethers } from 'hardhat';
 
 import { MockERC20Token } from '../../types';
 
 export const getPermitSignature = async (
-  wallet: SignerWithAddress,
+  wallet: HardhatEthersSigner,
   token: MockERC20Token,
   spender: string,
-  value: BigNumberish = constants.MaxUint256,
-  deadline = constants.MaxUint256,
+  value: bigint = ethers.MaxUint256,
+  deadline = ethers.MaxUint256,
 ): Promise<string> => {
+  const network = await ethers.provider.getNetwork();
   const [nonce, name, version, chainId] = await Promise.all([
     token.nonces(wallet.address),
     token.name(),
     '1',
-    wallet.getChainId(),
+    network.chainId,
   ]);
 
-  return wallet._signTypedData(
+  return wallet.signTypedData(
     {
       name,
       version,
       chainId,
-      verifyingContract: token.address,
+      verifyingContract: await token.getAddress(),
     },
     {
       Permit: [

@@ -13,10 +13,9 @@ Read more: https://github.com/PWNFinance/MultiToken
 */
 pragma solidity ^0.8.26;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 /**
  * @title Category
@@ -29,8 +28,6 @@ enum Category {
 }
 
 library MultiToken {
-    using SafeERC20 for IERC20;
-
     /**
      * @title Asset
      * @param assetAddress Address of the token contract defining the asset
@@ -46,33 +43,22 @@ library MultiToken {
     }
 
     /**
+     * @notice Thrown when unsupported category is used.
+     * @param categoryValue Value of the unsupported category.
+     */
+    error UnsupportedCategory(uint8 categoryValue);
+
+    /**
      * transferAsset
      * @dev wrapping function for transfer calls on various token interfaces
      * @param _asset Struct defining all necessary context of a token
      * @param _dest Destination address
      */
-    function transferAsset(Asset memory _asset, address _dest) internal {
-        if (_asset.category == Category.ERC20) {
-            IERC20 token = IERC20(_asset.assetAddress);
-            token.safeTransfer(_dest, _asset.amount);
-        } else if (_asset.category == Category.ERC721) {
-            IERC721 token = IERC721(_asset.assetAddress);
-            token.safeTransferFrom(address(this), _dest, _asset.id);
-        } else if (_asset.category == Category.ERC1155) {
-            IERC1155 token = IERC1155(_asset.assetAddress);
-            if (_asset.amount == 0) {
-                _asset.amount = 1;
-            }
-            token.safeTransferFrom(
-                address(this),
-                _dest,
-                _asset.id,
-                _asset.amount,
-                ""
-            );
-        } else {
-            revert("MultiToken: Unsupported category");
-        }
+    function transferAsset(
+        Asset memory _asset,
+        address _dest
+    ) internal returns (bool) {
+        return _transferAssetFrom(_asset, address(this), _dest);
     }
 
     /**
@@ -86,28 +72,8 @@ library MultiToken {
         Asset memory _asset,
         address _source,
         address _dest
-    ) internal {
-        if (_asset.category == Category.ERC20) {
-            IERC20 token = IERC20(_asset.assetAddress);
-            token.safeTransferFrom(_source, _dest, _asset.amount);
-        } else if (_asset.category == Category.ERC721) {
-            IERC721 token = IERC721(_asset.assetAddress);
-            token.safeTransferFrom(_source, _dest, _asset.id);
-        } else if (_asset.category == Category.ERC1155) {
-            IERC1155 token = IERC1155(_asset.assetAddress);
-            if (_asset.amount == 0) {
-                _asset.amount = 1;
-            }
-            token.safeTransferFrom(
-                _source,
-                _dest,
-                _asset.id,
-                _asset.amount,
-                ""
-            );
-        } else {
-            revert("MultiToken: Unsupported category");
-        }
+    ) internal returns (bool) {
+        return _transferAssetFrom(_asset, _source, _dest);
     }
 
     /**
@@ -127,7 +93,7 @@ library MultiToken {
             IERC1155 token = IERC1155(_asset.assetAddress);
             token.setApprovalForAll(_target, true);
         } else {
-            revert("MultiToken: Unsupported category");
+            revert UnsupportedCategory(uint8(_asset.category));
         }
     }
 
@@ -155,7 +121,7 @@ library MultiToken {
             IERC1155 token = IERC1155(_asset.assetAddress);
             return token.balanceOf(_target, _asset.id);
         } else {
-            revert("MultiToken: Unsupported category");
+            revert UnsupportedCategory(uint8(_asset.category));
         }
     }
 
@@ -195,5 +161,70 @@ library MultiToken {
             _asset.assetAddress == _otherAsset.assetAddress &&
             _asset.category == _otherAsset.category &&
             _asset.id == _otherAsset.id;
+    }
+
+    /**
+     * _transferAssetFrom
+     * @dev private wrapping function for transfer From calls on various token interfaces
+     * @param _asset Struct defining all necessary context of a token
+     * @param _source Account/address that provided the allowance
+     * @param _dest Destination address
+     */
+    function _transferAssetFrom(
+        Asset memory _asset,
+        address _source,
+        address _dest
+    ) private returns (bool) {
+        bool success;
+        bytes memory data;
+
+        if (_asset.category == Category.ERC20) {
+            // Call ERC20 transferFrom function
+            // solhint-disable-next-line avoid-low-level-calls
+            (success, data) = _asset.assetAddress.call(
+                abi.encodeWithSelector(
+                    IERC20.transferFrom.selector,
+                    _source,
+                    _dest,
+                    _asset.amount
+                )
+            );
+
+            // Check if the call was successful and that the data is either empty or decodes to true
+            return success && (data.length == 0 || abi.decode(data, (bool)));
+        } else if (_asset.category == Category.ERC721) {
+            // Call ERC721 safeTransferFrom function
+            // solhint-disable-next-line avoid-low-level-calls
+            (success, ) = _asset.assetAddress.call(
+                abi.encodeWithSignature(
+                    "safeTransferFrom(address,address,uint256)",
+                    _source,
+                    _dest,
+                    _asset.id,
+                    ""
+                )
+            );
+
+            return success;
+        } else if (_asset.category == Category.ERC1155) {
+            uint256 amountToTransfer = _asset.amount == 0 ? 1 : _asset.amount;
+
+            // Call ERC1155 safeTransferFrom function
+            // solhint-disable-next-line avoid-low-level-calls
+            (success, ) = _asset.assetAddress.call(
+                abi.encodeWithSelector(
+                    IERC1155.safeTransferFrom.selector,
+                    _source,
+                    _dest,
+                    _asset.id,
+                    amountToTransfer,
+                    ""
+                )
+            );
+
+            return success;
+        } else {
+            revert UnsupportedCategory(uint8(_asset.category));
+        }
     }
 }

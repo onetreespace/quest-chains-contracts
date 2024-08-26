@@ -220,15 +220,10 @@ interface IQuestChainSignals {
 
     /// @notice Error thrown when there are no successful reviews.
     error NoSuccessfulReview();
-
-    /// @notice Error thrown when the quest chain is already upgraded.
-    error AlreadyUpgraded();
 }
 
 /// @title IQuestChain
 /// @notice Interface for managing quest chains, including creation, editing, submission, and review of quests.
 /// @dev This interface defines the core functions and events required for managing quests within a quest chain.
 // solhint-disable-next-line no-empty-blocks
-interface IQuestChain is IQuestChainFunctions, IQuestChainSignals {
-
-}
+interface IQuestChain is IQuestChainFunctions, IQuestChainSignals {}

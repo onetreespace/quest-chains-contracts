@@ -1,5 +1,4 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { BigNumber } from 'ethers';
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
 
 export const NETWORK_NAME: Record<number, string> = {
@@ -55,30 +54,30 @@ export const DEFAULT_UPGRADE_FEE = 0;
 
 export type SetupValues = {
   chainId: number;
-  deployer: SignerWithAddress;
+  deployer: HardhatEthersSigner;
   address: string;
-  balance: BigNumber;
+  balance: bigint;
 };
 
 export const validateSetup = async (): Promise<SetupValues> => {
   const [deployer] = await ethers.getSigners();
   const address = await deployer.getAddress();
-  if (!deployer.provider) {
+  if (!ethers.provider) {
     throw new Error('Provider not found for network');
   }
-  const { chainId } = await deployer.provider.getNetwork();
+  const { chainId } = await ethers.provider.getNetwork();
   console.log('Chain ID:', chainId);
-  console.log('Network:', NETWORK_NAME[chainId]);
+  console.log('Network:', NETWORK_NAME[Number(chainId)]);
   if (!Object.keys(NETWORK_NAME).includes(chainId.toString())) {
     throw new Error('Unsupported network');
   }
   console.log('Account Address:', address);
-  const balance = await deployer.provider.getBalance(address);
+  const balance = await ethers.provider.getBalance(address);
   console.log(
     'Account Balance:',
-    ethers.utils.formatEther(balance),
-    NETWORK_CURRENCY[chainId],
+    ethers.formatEther(balance),
+    NETWORK_CURRENCY[Number(chainId)],
   );
 
-  return { chainId, deployer, address, balance };
+  return { chainId: Number(chainId), deployer, address, balance };
 };

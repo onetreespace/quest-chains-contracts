@@ -1,23 +1,9 @@
-import '@nomiclabs/hardhat-etherscan';
-import '@nomiclabs/hardhat-waffle';
-import '@typechain/hardhat';
-import 'hardhat-gas-reporter';
-import 'solidity-coverage';
+import '@nomicfoundation/hardhat-toolbox';
 
 import dotenv from 'dotenv';
-import { HardhatUserConfig, task } from 'hardhat/config';
+import { HardhatUserConfig } from 'hardhat/config';
 
 dotenv.config();
-
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task('accounts', 'Prints the list of accounts', async (_args, hre) => {
-  const accounts = await hre.ethers.getSigners();
-
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
 
 if (!process.env.PRIVATE_KEY && !process.env.MNEMONIC) {
   console.error('invalid env variable: PRIVATE_KEY or MNEMONIC');
@@ -27,9 +13,6 @@ if (!process.env.PRIVATE_KEY && !process.env.MNEMONIC) {
 const accounts = process.env.MNEMONIC
   ? { mnemonic: process.env.MNEMONIC }
   : [process.env.PRIVATE_KEY!];
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
   solidity: {
