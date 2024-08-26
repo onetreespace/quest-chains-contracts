@@ -220,6 +220,7 @@ contract QuestChain is
     }
 
     /// @notice Submits proofs for completing particular quests in the quest chain.
+    /// @param _quester Address of the quester submitting the proof.
     /// @param _questIdList List of quest IDs for the quest submissions.
     /// @param _proofList List of off-chain proofs for each quest.
     function submitProofs(

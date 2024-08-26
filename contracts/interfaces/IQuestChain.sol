@@ -21,6 +21,7 @@ enum QuestStatus {
 /// @notice Structure for holding quest details.
 /// @dev Includes information about whether the quest is paused, optional, or can skip review.
 struct QuestDetails {
+    uint256 order; // Position at which quest is displayed in UI, 0-indexed.
     uint256[] prereqQuests; // List of quest IDs required to complete this quest.
     bool disabled; // Indicates if the quest is paused.
     bool optional; // Indicates if the quest is optional.
@@ -64,6 +65,7 @@ interface IQuestChainFunctions {
     ) external;
 
     /// @notice Submits proofs for completing particular quests in the quest chain.
+    /// @param _quester Address of the quester submitting the proof.
     /// @param _questIdList List of quest IDs for the quest submissions.
     /// @param _proofList List of off-chain proofs for each quest.
     function submitProofs(
