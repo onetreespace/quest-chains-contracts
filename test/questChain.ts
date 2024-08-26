@@ -1370,7 +1370,7 @@ describe('QuestChain', () => {
             0,
             '1',
           ),
-      ).to.be.revertedWith('TokenGated: only admin');
+      ).to.be.revertedWithCustomError(limiterTokenGated, 'OnlyAdmin');
     });
 
     it('addQuestChainDetails: works when sender is QuestChain admin', async () => {
@@ -1434,9 +1434,9 @@ describe('QuestChain', () => {
       (await limiterChain.createQuests([''])).wait();
 
       await mockToken.setBalanceOf(signers[0].address, 9);
-      await expect(limiterChain.submitProofs(['0'], [''])).to.be.revertedWith(
-        'LimiterTokenGated: limited',
-      );
+      await expect(
+        limiterChain.submitProofs(['0'], ['']),
+      ).to.be.revertedWithCustomError(limiterTokenGated, 'Limited');
     });
 
     it('submitProofs: works when sender has minimum balance or above', async () => {
@@ -1472,7 +1472,7 @@ describe('QuestChain', () => {
             await limiterChain.getAddress(),
             '1',
           ),
-      ).to.be.revertedWith('TokenGated: only admin');
+      ).to.be.revertedWithCustomError(limiterTokenFee, 'OnlyAdmin');
     });
 
     it('addQuestChainDetails: works when sender is QuestChain admin', async () => {
@@ -1540,7 +1540,6 @@ describe('QuestChain', () => {
     it('submitProofs: revert when sender does not have enough balance', async () => {
       (await limiterChain.createQuests([''])).wait();
 
-      console.log('mockToken', await mockToken.getAddress());
       await expect(
         limiterChain.submitProofs(['0'], ['']),
       ).to.be.revertedWithCustomError(limiterTokenFee, 'Limited');

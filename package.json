@@ -68,7 +68,7 @@
     "*.{json,yml,yaml,md}": [
       "prettier --write"
     ],
-    "*.{sol}": [
+    "*.sol": [
       "prettier --write --plugin=prettier-plugin-solidity",
       "solhint --fix"
     ]
