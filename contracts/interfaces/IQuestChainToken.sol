@@ -7,7 +7,7 @@ pragma solidity ^0.8.26;
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
 import {IQuestChainFactory} from "./IQuestChainFactory.sol";
-import {IERC1155MetadataURI}  from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
+import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 
 interface IQuestChainTokenFunctions is IERC1155MetadataURI {
     function setTokenOwner(uint256 _tokenId, address _questChain) external;
@@ -43,6 +43,8 @@ interface IQuestChainTokenSignals {
     error SoulBound();
 }
 
-
 // solhint-disable-next-line no-empty-blocks
-interface IQuestChainToken is IQuestChainTokenFunctions, IQuestChainTokenSignals {}
+interface IQuestChainToken is
+    IQuestChainTokenFunctions,
+    IQuestChainTokenSignals
+{}

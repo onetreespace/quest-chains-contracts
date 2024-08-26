@@ -1,6 +1,6 @@
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
-
 
 import {
   QuestChain,
@@ -15,7 +15,6 @@ import {
   getContractAt,
   numberToBytes32,
 } from './utils/helpers';
-import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 
 const DETAILS_STRING = 'ipfs://details';
 const URI_STRING = 'ipfs://uri';
@@ -86,7 +85,10 @@ describe('QuestChainFactory', () => {
       paused: false,
     };
     const tx = questChainTemplate.init(info);
-    await expect(tx).to.revertedWithCustomError(questChainTemplate, "InvalidInitialization")
+    await expect(tx).to.revertedWithCustomError(
+      questChainTemplate,
+      'InvalidInitialization',
+    );
   });
 
   describe('create', async () => {
@@ -275,19 +277,27 @@ describe('QuestChainFactory', () => {
 
       const txPromise = chainFactory.create(info, numberToBytes32(5));
 
-      await expect(txPromise).to.be.revertedWithCustomError(questChainTemplate, "NoOwners")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        questChainTemplate,
+        'NoOwners',
+      );
     });
   });
 
   describe('questChainToken', async () => {
     it('Should revert set token owner', async () => {
       const txPromise = questChainToken.setTokenOwner(0, signers[0].address);
-      await expect(txPromise).to.be.revertedWithCustomError(questChainToken, "NotFactory");
-
+      await expect(txPromise).to.be.revertedWithCustomError(
+        questChainToken,
+        'NotFactory',
+      );
     });
     it('Should revert set token uri', async () => {
       const txPromise = questChainToken.setTokenURI(0, URI_STRING);
-      await expect(txPromise).to.be.revertedWithCustomError(questChainToken, "NotTokenOwner");
+      await expect(txPromise).to.be.revertedWithCustomError(
+        questChainToken,
+        'NotTokenOwner',
+      );
     });
   });
 
@@ -296,12 +306,15 @@ describe('QuestChainFactory', () => {
       const tx = chainFactory
         .connect(signers[1])
         .proposeAdminReplace(signers[1].address);
-      await expect(tx).to.be.revertedWithCustomError(chainFactory, "NotAdmin")
+      await expect(tx).to.be.revertedWithCustomError(chainFactory, 'NotAdmin');
     });
 
     it('Should revert admin change proposal when new admin is 0 address', async () => {
       const tx = chainFactory.proposeAdminReplace(ethers.ZeroAddress);
-      await expect(tx).to.be.revertedWithCustomError(chainFactory, "ZeroAddress")
+      await expect(tx).to.be.revertedWithCustomError(
+        chainFactory,
+        'ZeroAddress',
+      );
     });
 
     it('Should be able to create a proposal for replacing admin', async () => {
@@ -314,20 +327,26 @@ describe('QuestChainFactory', () => {
 
     it('Should revert admin change proposal when new admin is same as old proposed admin', async () => {
       const tx = chainFactory.proposeAdminReplace(signers[1].address);
-      await expect(tx).to.be.revertedWithCustomError(chainFactory, "NoAddressChange")
+      await expect(tx).to.be.revertedWithCustomError(
+        chainFactory,
+        'NoAddressChange',
+      );
     });
 
     it('Should revert admin change execution if one day has not passed', async () => {
       const tx = chainFactory.connect(signers[1]).executeAdminReplace();
-      await expect(tx).to.be.revertedWithCustomError(chainFactory, "TooSoon")
+      await expect(tx).to.be.revertedWithCustomError(chainFactory, 'TooSoon');
     });
 
     it('Should revert admin change execution if not proposed admin', async () => {
       await ethers.provider.send('evm_setNextBlockTimestamp', [
-        Number((await chainFactory.adminProposalTimestamp()) + (864000n)),
+        Number((await chainFactory.adminProposalTimestamp()) + 864000n),
       ]);
       const tx = chainFactory.executeAdminReplace();
-      await expect(tx).to.be.revertedWithCustomError(chainFactory, "NotProposedAdmin")
+      await expect(tx).to.be.revertedWithCustomError(
+        chainFactory,
+        'NotProposedAdmin',
+      );
     });
 
     it('Should execute admin change after one day', async () => {

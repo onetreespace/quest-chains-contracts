@@ -6,10 +6,9 @@ pragma solidity ^0.8.26;
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
-import "../interfaces/ILimiter.sol";
-import "@openzeppelin/contracts/access/IAccessControl.sol";
+import {ILimiter} from "../interfaces/ILimiter.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {MultiToken, Category} from "../libraries/MultiToken.sol";
-import {console} from "hardhat/console.sol";
 
 /// @author @parv3213
 contract LimiterTokenFee is ILimiter {
@@ -22,9 +21,10 @@ contract LimiterTokenFee is ILimiter {
         address treasuryAddress;
         uint256 feeAmount;
     }
-    mapping(address => QuestChainDetails) public questChainDetails;
 
     bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    mapping(address => QuestChainDetails) public questChainDetails;
 
     event AddQuestChainDetails(
         address _questChain,
@@ -35,6 +35,7 @@ contract LimiterTokenFee is ILimiter {
     );
 
     error Limited();
+    error OnlyAdmin();
 
     function addQuestChainDetails(
         address _questChain,
@@ -44,10 +45,9 @@ contract LimiterTokenFee is ILimiter {
         address _treasuryAddress,
         uint256 _feeAmount
     ) external {
-        require(
-            IAccessControl(_questChain).hasRole(ADMIN_ROLE, msg.sender),
-            "TokenGated: only admin"
-        );
+        if (!IAccessControl(_questChain).hasRole(ADMIN_ROLE, msg.sender)) {
+            revert OnlyAdmin();
+        }
         questChainDetails[_questChain] = QuestChainDetails(
             _tokenAddress,
             _category,
@@ -77,8 +77,10 @@ contract LimiterTokenFee is ILimiter {
             _details.nftId
         );
 
-
-        bool success = _asset.transferAssetFrom(_sender, _details.treasuryAddress);
+        bool success = _asset.transferAssetFrom(
+            _sender,
+            _details.treasuryAddress
+        );
         if (!success) {
             revert Limited();
         }

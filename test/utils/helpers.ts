@@ -1,4 +1,8 @@
-import { BaseContract, ContractTransactionReceipt, EventFragment } from 'ethers';
+import {
+  BaseContract,
+  ContractTransactionReceipt,
+  EventFragment,
+} from 'ethers';
 import { ethers } from 'hardhat';
 import { Libraries } from 'hardhat/types';
 
@@ -25,14 +29,16 @@ export const getContractAt = async <Type>(
   return ctr;
 };
 
-export const awaitQuestChainAddress = async (receipt: ContractTransactionReceipt | null) => {
+export const awaitQuestChainAddress = async (
+  receipt: ContractTransactionReceipt | null,
+) => {
   if (!receipt || !receipt.logs) return '';
   const abi = new ethers.Interface([
     'event QuestChainCreated(uint256 id, address questChain)',
   ]);
   const eventFragment = EventFragment.from(abi.fragments[0]);
   const eventTopic = eventFragment.topicHash;
-  const event = receipt.logs.find((e) => e.topics[0] === eventTopic);
+  const event = receipt.logs.find(e => e.topics[0] === eventTopic);
   if (event) {
     const decodedLog = abi.decodeEventLog(
       eventFragment,
@@ -55,4 +61,4 @@ export const numberToBytes32 = (num: number) => {
   const beArray = ethers.toBeArray(num);
   const hexlified = ethers.hexlify(beArray);
   return ethers.zeroPadValue(hexlified, 32);
-}
+};

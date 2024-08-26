@@ -6,8 +6,7 @@ pragma solidity ^0.8.26;
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
-import {IERC20Token} from "./IERC20Token.sol";
-import {IQuestChainToken} from  "./IQuestChainToken.sol";
+import {IQuestChainToken} from "./IQuestChainToken.sol";
 import {QuestChainCommons} from "../libraries/QuestChainCommons.sol";
 
 interface IQuestChainFactoryFunctions {
@@ -67,6 +66,8 @@ interface IQuestChainFactorySignals {
     error NotProposedAdmin();
 }
 
-
 // solhint-disable-next-line no-empty-blocks
-interface IQuestChainFactory is IQuestChainFactoryFunctions, IQuestChainFactorySignals {}
+interface IQuestChainFactory is
+    IQuestChainFactoryFunctions,
+    IQuestChainFactorySignals
+{}

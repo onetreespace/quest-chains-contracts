@@ -1,7 +1,7 @@
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
 
 import { MockERC20Token } from '../../types';
-import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 
 export const getPermitSignature = async (
   wallet: HardhatEthersSigner,

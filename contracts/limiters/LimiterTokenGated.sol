@@ -6,10 +6,8 @@ pragma solidity ^0.8.26;
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../interfaces/ILimiter.sol";
-import "../interfaces/IQuestChain.sol";
-import "@openzeppelin/contracts/access/IAccessControl.sol";
+import {ILimiter} from "../interfaces/ILimiter.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 import {MultiToken, Category} from "../libraries/MultiToken.sol";
 
 /// @author @parv3213
@@ -22,9 +20,10 @@ contract LimiterTokenGated is ILimiter {
         uint256 nftId;
         uint256 minTokenBalance;
     }
-    mapping(address => QuestChainDetails) public questChainDetails;
 
     bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    mapping(address => QuestChainDetails) public questChainDetails;
 
     event AddQuestChainDetails(
         address _questChain,
@@ -33,6 +32,9 @@ contract LimiterTokenGated is ILimiter {
         address _sender
     );
 
+    error OnlyAdmin();
+    error Limited();
+
     function addQuestChainDetails(
         address _questChain,
         address _tokenAddress,
@@ -40,10 +42,9 @@ contract LimiterTokenGated is ILimiter {
         uint256 _nftId,
         uint256 _minBalance
     ) external {
-        require(
-            IAccessControl(_questChain).hasRole(ADMIN_ROLE, msg.sender),
-            "TokenGated: only admin"
-        );
+        if (!IAccessControl(_questChain).hasRole(ADMIN_ROLE, msg.sender)) {
+            revert OnlyAdmin();
+        }
         questChainDetails[_questChain] = QuestChainDetails(
             _tokenAddress,
             _category,
@@ -61,10 +62,10 @@ contract LimiterTokenGated is ILimiter {
     function submitProofLimiter(
         address _sender,
         uint256[] calldata /* _questIdList */
-    ) external {
+    ) external view {
         QuestChainDetails memory _details = questChainDetails[msg.sender];
 
-        require(
+        if (
             MultiToken
                 .Asset(
                     _details.tokenAddress,
@@ -72,8 +73,9 @@ contract LimiterTokenGated is ILimiter {
                     0,
                     _details.nftId
                 )
-                .balanceOf(_sender) >= _details.minTokenBalance,
-            "LimiterTokenGated: limited"
-        );
+                .balanceOf(_sender) < _details.minTokenBalance
+        ) {
+            revert Limited();
+        }
     }
 }

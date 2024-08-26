@@ -1,4 +1,5 @@
 import { execSync } from 'child_process';
+import { ContractTransactionResponse } from 'ethers';
 import fs from 'fs';
 import { ethers, network, run } from 'hardhat';
 
@@ -11,7 +12,6 @@ import {
   TREASURY_ADDRESS,
   validateSetup,
 } from './utils';
-import { ContractTransactionResponse } from 'ethers';
 
 async function main() {
   const { chainId, address, balance } = await validateSetup();
@@ -27,16 +27,17 @@ async function main() {
 
   const QuestChain = await ethers.getContractFactory('QuestChain', {});
   const questChain = (await QuestChain.deploy()) as QuestChain;
-  await questChain.waitForDeployment()
+  await questChain.waitForDeployment();
   console.log('Template Address:', await questChain.getAddress());
 
-  const QuestChainFactory = await ethers.getContractFactory(
-    'QuestChainFactory',
-  );
+  const QuestChainFactory =
+    await ethers.getContractFactory('QuestChainFactory');
   const questChainFactory = (await QuestChainFactory.deploy(
     await questChain.getAddress(),
     address,
-  )) as QuestChainFactory & { deploymentTransaction(): ContractTransactionResponse }
+  )) as QuestChainFactory & {
+    deploymentTransaction(): ContractTransactionResponse;
+  };
   await questChainFactory.waitForDeployment();
   console.log('Factory Address:', await questChainFactory.getAddress());
 
@@ -56,7 +57,7 @@ async function main() {
   console.log('Block Number:', receipt.blockNumber);
 
   const afterBalance = await ethers.provider.getBalance(address);
-  const gasUsed = balance - (afterBalance);
+  const gasUsed = balance - afterBalance;
   console.log(
     'Gas Used:',
     ethers.formatEther(gasUsed),

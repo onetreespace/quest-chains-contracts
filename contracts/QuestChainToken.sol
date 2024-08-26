@@ -11,13 +11,12 @@ import {ERC1155, IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC115
 import {IQuestChainToken} from "./interfaces/IQuestChainToken.sol";
 import {IQuestChainFactory} from "./interfaces/IQuestChainFactory.sol";
 
-
 /// @title QuestChainToken
 /// @notice ERC1155 token contract for QuestChain, designed to be non-transferable (SoulBound).
 /// @dev Manages quest token ownership and metadata.
 contract QuestChainToken is IQuestChainToken, ERC1155 {
     /// @notice Immutable contract address for the quest chain factory.
-    // solhint-disable-next-line immutable-vars-naming
+    // solhint-disable-next-line style-guide-casing,immutable-vars-naming
     IQuestChainFactory public immutable questChainFactory;
 
     /********************************
@@ -39,7 +38,8 @@ contract QuestChainToken is IQuestChainToken, ERC1155 {
     /// @dev Access control modifier for functions callable by token owners only.
     /// @param _tokenId The quest token ID.
     modifier onlyTokenOwner(uint256 _tokenId) {
-        if (msg.sender != _tokenOwners[_tokenId]) revert NotTokenOwner(_tokenId);
+        if (msg.sender != _tokenOwners[_tokenId])
+            revert NotTokenOwner(_tokenId);
         _;
     }
 
@@ -140,4 +140,3 @@ contract QuestChainToken is IQuestChainToken, ERC1155 {
         revert SoulBound();
     }
 }
-

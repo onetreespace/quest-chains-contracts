@@ -1,13 +1,15 @@
+import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { expect } from 'chai';
+import { EventFragment } from 'ethers';
 import { ethers } from 'hardhat';
 
 import {
   LimiterTokenFee,
   LimiterTokenGated,
+  MockERC20Token,
   QuestChain,
   QuestChainFactory,
   QuestChainToken,
-  MockERC20Token,
 } from '../types';
 import { QuestChainCommons } from '../types/contracts/QuestChain';
 import {
@@ -17,8 +19,6 @@ import {
   numberToBytes32,
   Status,
 } from './utils/helpers';
-import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
-import { EventFragment } from 'ethers';
 
 const DETAILS_STRING = 'ipfs://details';
 const URI_STRING = 'ipfs://uri';
@@ -55,14 +55,14 @@ describe('QuestChain', () => {
     chainFactory = await deploy<QuestChainFactory>(
       'QuestChainFactory',
       {},
-      (await questChainImpl.getAddress()),
+      await questChainImpl.getAddress(),
       signers[0].address,
     );
 
     const info: QuestChainCommons.QuestChainInfoStruct = {
       details: DETAILS_STRING,
       tokenURI: URI_STRING,
-      owners: [(await owner.getAddress())],
+      owners: [await owner.getAddress()],
       admins: [],
       editors: [],
       reviewers: [],
@@ -85,17 +85,23 @@ describe('QuestChain', () => {
     );
 
     expect(await chainToken.tokenOwner(await chain.questChainId())).to.equal(
-      (await chain.getAddress()),
+      await chain.getAddress(),
     );
   });
 
   it('Should initialize correctly', async () => {
-    expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, (await owner.getAddress()))).to.equal(
+    expect(
+      await chain.hasRole(DEFAULT_ADMIN_ROLE, await owner.getAddress()),
+    ).to.equal(true);
+    expect(await chain.hasRole(ADMIN_ROLE, await owner.getAddress())).to.equal(
       true,
     );
-    expect(await chain.hasRole(ADMIN_ROLE, (await owner.getAddress()))).to.equal(true);
-    expect(await chain.hasRole(EDITOR_ROLE, (await owner.getAddress()))).to.equal(true);
-    expect(await chain.hasRole(REVIEWER_ROLE, (await owner.getAddress()))).to.equal(true);
+    expect(await chain.hasRole(EDITOR_ROLE, await owner.getAddress())).to.equal(
+      true,
+    );
+    expect(
+      await chain.hasRole(REVIEWER_ROLE, await owner.getAddress()),
+    ).to.equal(true);
 
     expect(await chain.getRoleAdmin(DEFAULT_ADMIN_ROLE)).to.equal(
       DEFAULT_ADMIN_ROLE,
@@ -120,7 +126,7 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(REVIEWER_ROLE, account, (await owner.getAddress()));
+        .withArgs(REVIEWER_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(false);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(false);
@@ -140,10 +146,10 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(REVIEWER_ROLE, account, (await owner.getAddress()));
+        .withArgs(REVIEWER_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(EDITOR_ROLE, account, (await owner.getAddress()));
+        .withArgs(EDITOR_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(false);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(false);
@@ -163,13 +169,13 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(REVIEWER_ROLE, account, (await owner.getAddress()));
+        .withArgs(REVIEWER_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(EDITOR_ROLE, account, (await owner.getAddress()));
+        .withArgs(EDITOR_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(ADMIN_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(false);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(true);
@@ -189,16 +195,16 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(REVIEWER_ROLE, account, (await owner.getAddress()));
+        .withArgs(REVIEWER_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(EDITOR_ROLE, account, (await owner.getAddress()));
+        .withArgs(EDITOR_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(ADMIN_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleGranted')
-        .withArgs(DEFAULT_ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(DEFAULT_ADMIN_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(true);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(true);
@@ -223,7 +229,7 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(DEFAULT_ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(DEFAULT_ADMIN_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(false);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(true);
@@ -246,10 +252,10 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(ADMIN_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(DEFAULT_ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(DEFAULT_ADMIN_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(false);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(false);
@@ -272,13 +278,13 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(EDITOR_ROLE, account, (await owner.getAddress()));
+        .withArgs(EDITOR_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(ADMIN_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(DEFAULT_ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(DEFAULT_ADMIN_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(false);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(false);
@@ -301,16 +307,16 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(REVIEWER_ROLE, account, (await owner.getAddress()));
+        .withArgs(REVIEWER_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(EDITOR_ROLE, account, (await owner.getAddress()));
+        .withArgs(EDITOR_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(ADMIN_ROLE, account, await owner.getAddress());
       await expect(tx)
         .to.emit(chain, 'RoleRevoked')
-        .withArgs(DEFAULT_ADMIN_ROLE, account, (await owner.getAddress()));
+        .withArgs(DEFAULT_ADMIN_ROLE, account, await owner.getAddress());
 
       expect(await chain.hasRole(DEFAULT_ADMIN_ROLE, account)).to.equal(false);
       expect(await chain.hasRole(ADMIN_ROLE, account)).to.equal(false);
@@ -327,14 +333,17 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'QuestChainEdited')
-        .withArgs((await owner.getAddress()), NEW_DETAILS_STRING);
+        .withArgs(await owner.getAddress(), NEW_DETAILS_STRING);
     });
 
     it('Should revert edit if not ADMIN', async () => {
       const NEW_DETAILS_STRING = 'ipfs://new-details-2';
       const tx = chain.connect(signers[1]).edit(NEW_DETAILS_STRING);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+      await expect(tx).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
     });
 
     it('Should edit if new ADMIN', async () => {
@@ -356,14 +365,17 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'QuestsCreated')
-        .withArgs((await owner.getAddress()), [DETAILS_STRING]);
+        .withArgs(await owner.getAddress(), [DETAILS_STRING]);
       expect(await chain.questCount()).to.equal(1);
     });
 
     it('Should revert create if not EDITOR', async () => {
       const tx = chain.connect(signers[2]).createQuests([DETAILS_STRING]);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+      await expect(tx).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
     });
 
     it('Should create if new EDITOR (& also multiple create)', async () => {
@@ -394,24 +406,27 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'QuestsEdited')
-        .withArgs((await owner.getAddress()), [0], [DETAILS_STRING]);
+        .withArgs(await owner.getAddress(), [0], [DETAILS_STRING]);
     });
 
     it('Should revert edit if invalid params', async () => {
       const tx = chain.editQuests([0, 1], [DETAILS_STRING]);
-      await expect(tx).to.be.revertedWithCustomError(chain, "InvalidParams")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'InvalidParams');
     });
 
     it('Should revert edit if invalid questId', async () => {
       const tx = chain.editQuests([5], [DETAILS_STRING]);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "QuestNotFound")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'QuestNotFound');
     });
 
     it('Should revert edit if not EDITOR', async () => {
       const tx = chain.connect(signers[2]).editQuests([0], [DETAILS_STRING]);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+      await expect(tx).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
     });
 
     it('Should edit if new EDITOR (& also multiple edit)', async () => {
@@ -442,18 +457,18 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'QuestProofsSubmitted')
-        .withArgs((await owner.getAddress()), questIdList, detailsList);
+        .withArgs(await owner.getAddress(), questIdList, detailsList);
     });
 
     it('Should revert submitProofs if invalid params', async () => {
       const tx = chain.submitProofs([0, 1], [DETAILS_STRING]);
-      await expect(tx).to.be.revertedWithCustomError(chain, "InvalidParams")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'InvalidParams');
     });
 
     it('Should revert submitProofs if invalid questId', async () => {
       const tx = chain.submitProofs([5], [DETAILS_STRING]);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "QuestNotFound")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'QuestNotFound');
     });
 
     it('Should submitProofs event if already in review', async () => {
@@ -462,23 +477,28 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(chain, 'QuestProofsSubmitted')
-        .withArgs((await owner.getAddress()), [0], [DETAILS_STRING]);
+        .withArgs(await owner.getAddress(), [0], [DETAILS_STRING]);
     });
 
     it('Should revert submitProofs if already accepted', async () => {
       await (
-        await chain.reviewProofs([(await owner.getAddress())], [0], [true], [DETAILS_STRING])
+        await chain.reviewProofs(
+          [await owner.getAddress()],
+          [0],
+          [true],
+          [DETAILS_STRING],
+        )
       ).wait();
 
       const tx = chain.submitProofs([0], [DETAILS_STRING]);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AlreadyPassed");
+      await expect(tx).to.be.revertedWithCustomError(chain, 'AlreadyPassed');
     });
 
     it('Should submitProofs for a quest if already failed', async () => {
       await (
         await chain.reviewProofs(
-          [(await owner.getAddress())],
+          [await owner.getAddress()],
           [1],
           [false],
           [DETAILS_STRING],
@@ -490,7 +510,7 @@ describe('QuestChain', () => {
       await tx.wait();
       await expect(tx)
         .to.emit(chain, 'QuestProofsSubmitted')
-        .withArgs((await owner.getAddress()), [1], [NEW_DETAILS_STRING]);
+        .withArgs(await owner.getAddress(), [1], [NEW_DETAILS_STRING]);
     });
   });
 
@@ -521,7 +541,7 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(chain, 'QuestProofsReviewed')
         .withArgs(
-          (await owner.getAddress()),
+          await owner.getAddress(),
           questerList,
           questIdList,
           successList,
@@ -544,7 +564,7 @@ describe('QuestChain', () => {
         successList,
         detailsList,
       );
-      await expect(tx).to.be.revertedWithCustomError(chain, "InvalidParams")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'InvalidParams');
     });
 
     it('Should reject reviewProofs for a proof submission', async () => {
@@ -566,7 +586,7 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(chain, 'QuestProofsReviewed')
         .withArgs(
-          (await owner.getAddress()),
+          await owner.getAddress(),
           [signers[1].address],
           [2],
           [false],
@@ -579,24 +599,24 @@ describe('QuestChain', () => {
 
     it('Should revert reviewProofs if invalid questId', async () => {
       const tx = chain.reviewProofs(
-        [(await owner.getAddress())],
+        [await owner.getAddress()],
         [5],
         [true],
         [DETAILS_STRING],
       );
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "QuestNotFound")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'QuestNotFound');
     });
 
     it('Should revert reviewProofs if quest not in review', async () => {
       const tx = chain.reviewProofs(
-        [(await owner.getAddress())],
+        [await owner.getAddress()],
         [3],
         [true],
         [DETAILS_STRING],
       );
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "QuestNotInReview")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'QuestNotInReview');
     });
 
     it('Should revert reviewProofs if not REVIEWER', async () => {
@@ -607,7 +627,10 @@ describe('QuestChain', () => {
         .connect(signers[3])
         .reviewProofs([signers[1].address], [3], [true], [DETAILS_STRING]);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+      await expect(tx).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
     });
 
     it('Should reviewProofs if new REVIEWER', async () => {
@@ -691,9 +714,9 @@ describe('QuestChain', () => {
     });
 
     it('Should revert questStatus if invalid questId', async () => {
-      const tx = chain.questStatus((await owner.getAddress()), 5);
+      const tx = chain.questStatus(await owner.getAddress(), 5);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "QuestNotFound")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'QuestNotFound');
     });
   });
 
@@ -714,7 +737,10 @@ describe('QuestChain', () => {
 
       const tx = chain.connect(signers[5]).pause();
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+      await expect(tx).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
 
       expect(await chain.paused()).to.equal(true);
     });
@@ -724,7 +750,7 @@ describe('QuestChain', () => {
 
       const tx = chain.connect(signers[3]).submitProofs([0], ['']);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "EnforcedPause")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'EnforcedPause');
 
       expect(await chain.paused()).to.equal(true);
     });
@@ -747,7 +773,10 @@ describe('QuestChain', () => {
 
       const tx = chain.connect(signers[5]).unpause();
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+      await expect(tx).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
 
       expect(await chain.paused()).to.equal(false);
     });
@@ -785,11 +814,11 @@ describe('QuestChain', () => {
       }
 
       const abi = new ethers.Interface([
-        'event ConfiguredQuests(address indexed sender, uint256[] questIdList, (bool disabled, bool optional, bool skipReview)[] questDetails)'
+        'event ConfiguredQuests(address indexed sender, uint256[] questIdList, (bool disabled, bool optional, bool skipReview)[] questDetails)',
       ]);
       const eventFragment = EventFragment.from(abi.fragments[0]);
       const eventTopic = eventFragment.topicHash;
-      const event = receipt.logs.find((e) => e.topics[0] === eventTopic);
+      const event = receipt.logs.find(e => e.topics[0] === eventTopic);
       if (!event) {
         throw new Error('No event');
       }
@@ -803,10 +832,14 @@ describe('QuestChain', () => {
       expect(decoded.questIdList).to.deep.equal(questIdList);
       expect(decoded.questDetails[0][0]).to.equal(questDetailsList[0].disabled);
       expect(decoded.questDetails[0][1]).to.equal(questDetailsList[0].optional);
-      expect(decoded.questDetails[0][2]).to.equal(questDetailsList[0].skipReview);
+      expect(decoded.questDetails[0][2]).to.equal(
+        questDetailsList[0].skipReview,
+      );
       expect(decoded.questDetails[1][0]).to.equal(questDetailsList[1].disabled);
       expect(decoded.questDetails[1][1]).to.equal(questDetailsList[1].optional);
-      expect(decoded.questDetails[1][2]).to.equal(questDetailsList[1].skipReview);
+      expect(decoded.questDetails[1][2]).to.equal(
+        questDetailsList[1].skipReview,
+      );
 
       expect((await chain.questDetails(0)).disabled).to.equal(true);
       expect((await chain.questDetails(1)).disabled).to.equal(true);
@@ -832,11 +865,11 @@ describe('QuestChain', () => {
       }
 
       const abi = new ethers.Interface([
-        'event ConfiguredQuests(address indexed sender, uint256[] questIdList, (bool disabled, bool optional, bool skipReview)[] questDetails)'
+        'event ConfiguredQuests(address indexed sender, uint256[] questIdList, (bool disabled, bool optional, bool skipReview)[] questDetails)',
       ]);
       const eventFragment = EventFragment.from(abi.fragments[0]);
       const eventTopic = eventFragment.topicHash;
-      const event = receipt.logs.find((e) => e.topics[0] === eventTopic);
+      const event = receipt.logs.find(e => e.topics[0] === eventTopic);
       if (!event) {
         throw new Error('No event');
       }
@@ -850,13 +883,19 @@ describe('QuestChain', () => {
       expect(decoded.questIdList).to.deep.equal(questIdList);
       expect(decoded.questDetails[0][0]).to.equal(questDetailsList[0].disabled);
       expect(decoded.questDetails[0][1]).to.equal(questDetailsList[0].optional);
-      expect(decoded.questDetails[0][2]).to.equal(questDetailsList[0].skipReview);
+      expect(decoded.questDetails[0][2]).to.equal(
+        questDetailsList[0].skipReview,
+      );
       expect(decoded.questDetails[1][0]).to.equal(questDetailsList[1].disabled);
       expect(decoded.questDetails[1][1]).to.equal(questDetailsList[1].optional);
-      expect(decoded.questDetails[1][2]).to.equal(questDetailsList[1].skipReview);
+      expect(decoded.questDetails[1][2]).to.equal(
+        questDetailsList[1].skipReview,
+      );
       expect(decoded.questDetails[2][0]).to.equal(questDetailsList[2].disabled);
       expect(decoded.questDetails[2][1]).to.equal(questDetailsList[2].optional);
-      expect(decoded.questDetails[2][2]).to.equal(questDetailsList[2].skipReview);
+      expect(decoded.questDetails[2][2]).to.equal(
+        questDetailsList[2].skipReview,
+      );
 
       expect((await chain.questDetails(0)).disabled).to.equal(false);
       expect((await chain.questDetails(1)).disabled).to.equal(false);
@@ -895,18 +934,21 @@ describe('QuestChain', () => {
         .connect(signers[5])
         .configureQuests(questIdList, questDetailsList);
 
-      await expect(tx).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+      await expect(tx).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
     });
 
     it('should revert disable quest if invalid params', async () => {
       const tx = chain.configureQuests([0], []);
-      await expect(tx).to.be.revertedWithCustomError(chain, "InvalidParams")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'InvalidParams');
     });
 
     it('should revert submitProofs when disabled', async () => {
       expect((await chain.questDetails(2)).disabled).to.equal(true);
       const tx = chain.connect(signers[3]).submitProofs([2], ['']);
-      await expect(tx).to.be.revertedWithCustomError(chain, "QuestDisabled")
+      await expect(tx).to.be.revertedWithCustomError(chain, 'QuestDisabled');
       expect((await chain.questDetails(2)).disabled).to.equal(true);
     });
   });
@@ -915,7 +957,7 @@ describe('QuestChain', () => {
     const info: QuestChainCommons.QuestChainInfoStruct = {
       details: DETAILS_STRING,
       tokenURI: URI_STRING,
-      owners: [(await owner.getAddress())],
+      owners: [await owner.getAddress()],
       admins: [],
       editors: [],
       reviewers: [],
@@ -938,38 +980,55 @@ describe('QuestChain', () => {
     it('should revert mint if there are no quests', async () => {
       const questChain = await createChain([]);
       const txPromise = questChain.mintToken();
-      await expect(txPromise).to.be.revertedWithCustomError(chain, "NoQuestsFound")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        chain,
+        'NoQuestsFound',
+      );
     });
     it('should revert mint if there are quests not attempted', async () => {
       const questChain = await createChain(['1']);
       const txPromise = questChain.mintToken();
-      await expect(txPromise).to.be.revertedWithCustomError(chain, "ChainIncomplete")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        chain,
+        'ChainIncomplete',
+      );
     });
     it('should revert mint if there are quests not reviewed', async () => {
       const questChain = await createChain(['1']);
       await (await questChain.submitProofs([0], ['proof'])).wait();
       const txPromise = questChain.mintToken();
-      await expect(txPromise).to.be.revertedWithCustomError(chain, "ChainIncomplete")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        chain,
+        'ChainIncomplete',
+      );
     });
     it('should revert mint if there are quests failed', async () => {
       const questChain = await createChain(['1']);
       await (await questChain.submitProofs([0], ['proof'])).wait();
       await (
         await questChain.reviewProofs(
-          [(await owner.getAddress())],
+          [await owner.getAddress()],
           [0],
           [false],
           ['details'],
         )
       ).wait();
       const txPromise = questChain.mintToken();
-      await expect(txPromise).to.be.revertedWithCustomError(chain, "ChainIncomplete")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        chain,
+        'ChainIncomplete',
+      );
     });
     it('should mint if completed all quests', async () => {
       const questChain = await createChain(['1']);
       await (await questChain.submitProofs([0], ['proof'])).wait();
       await (
-        await questChain.reviewProofs([(await owner.getAddress())], [0], [true], ['details'])
+        await questChain.reviewProofs(
+          [await owner.getAddress()],
+          [0],
+          [true],
+          ['details'],
+        )
       ).wait();
       const tx = await questChain.mintToken();
       await tx.wait();
@@ -980,9 +1039,9 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(questChainToken, 'TransferSingle')
         .withArgs(
-          (await questChain.getAddress()),
+          await questChain.getAddress(),
           ethers.ZeroAddress,
-          (await owner.getAddress()),
+          await owner.getAddress(),
           await questChain.questChainId(),
           1,
         );
@@ -992,7 +1051,12 @@ describe('QuestChain', () => {
       questChain = await createChain(['1']);
       await (await questChain.submitProofs([0], ['proof'])).wait();
       await (
-        await questChain.reviewProofs([(await owner.getAddress())], [0], [true], ['details'])
+        await questChain.reviewProofs(
+          [await owner.getAddress()],
+          [0],
+          [true],
+          ['details'],
+        )
       ).wait();
       const tx = await questChain.mintToken();
       await tx.wait();
@@ -1003,14 +1067,17 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(questChainToken, 'TransferSingle')
         .withArgs(
-          (await questChain.getAddress()),
+          await questChain.getAddress(),
           ethers.ZeroAddress,
-          (await owner.getAddress()),
+          await owner.getAddress(),
           await questChain.questChainId(),
           1,
         );
       const txPromise = questChain.mintToken();
-      await expect(txPromise).to.be.revertedWithCustomError(questChainToken, "AlreadyMinted")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        questChainToken,
+        'AlreadyMinted',
+      );
     });
 
     it('should revert transfer of token', async () => {
@@ -1021,12 +1088,18 @@ describe('QuestChain', () => {
         1,
         '0x',
       );
-      await expect(txPromise).to.be.revertedWithCustomError(chainToken, "SoulBound")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        chainToken,
+        'SoulBound',
+      );
     });
 
     it('should revert approval of token', async () => {
       const txPromise = chainToken.setApprovalForAll(signers[1].address, true);
-      await expect(txPromise).to.be.revertedWithCustomError(chainToken, "SoulBound")
+      await expect(txPromise).to.be.revertedWithCustomError(
+        chainToken,
+        'SoulBound',
+      );
     });
   });
 
@@ -1034,14 +1107,25 @@ describe('QuestChain', () => {
     it('should revert burn if there is not token', async () => {
       const questChain = await createChain(['1']);
       const txPromise = questChain.burnToken();
-      const chainToken = await ethers.getContractAt("QuestChainToken", await questChain.questChainToken());
-      await expect(txPromise).to.be.revertedWithCustomError(chainToken, "TokenNotFound")
+      const chainToken = await ethers.getContractAt(
+        'QuestChainToken',
+        await questChain.questChainToken(),
+      );
+      await expect(txPromise).to.be.revertedWithCustomError(
+        chainToken,
+        'TokenNotFound',
+      );
     });
     it('should burn minted token', async () => {
       const questChain = await createChain(['1']);
       await (await questChain.submitProofs([0], ['proof'])).wait();
       await (
-        await questChain.reviewProofs([(await owner.getAddress())], [0], [true], ['details'])
+        await questChain.reviewProofs(
+          [await owner.getAddress()],
+          [0],
+          [true],
+          ['details'],
+        )
       ).wait();
       let tx = await questChain.mintToken();
       await tx.wait();
@@ -1052,9 +1136,9 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(questChainToken, 'TransferSingle')
         .withArgs(
-          (await questChain.getAddress()),
+          await questChain.getAddress(),
           ethers.ZeroAddress,
-          (await owner.getAddress()),
+          await owner.getAddress(),
           await questChain.questChainId(),
           1,
         );
@@ -1064,8 +1148,8 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(questChainToken, 'TransferSingle')
         .withArgs(
-          (await questChain.getAddress()),
-          (await owner.getAddress()),
+          await questChain.getAddress(),
+          await owner.getAddress(),
           ethers.ZeroAddress,
           await questChain.questChainId(),
           1,
@@ -1088,7 +1172,7 @@ describe('QuestChain', () => {
             { disabled: false, optional: false, skipReview: true }, // skipReview is true
           ],
         ),
-      ).to.be.revertedWithCustomError(questChain, "QuestNotFound");
+      ).to.be.revertedWithCustomError(questChain, 'QuestNotFound');
     });
 
     it('Set quests as skipReview, optional and disabled, respectively', async () => {
@@ -1109,11 +1193,11 @@ describe('QuestChain', () => {
       }
 
       const abi = new ethers.Interface([
-        'event ConfiguredQuests(address indexed sender, uint256[] questIdList, (bool disabled, bool optional, bool skipReview)[] questDetails)'
+        'event ConfiguredQuests(address indexed sender, uint256[] questIdList, (bool disabled, bool optional, bool skipReview)[] questDetails)',
       ]);
       const eventFragment = EventFragment.from(abi.fragments[0]);
       const eventTopic = eventFragment.topicHash;
-      const event = receipt.logs.find((e) => e.topics[0] === eventTopic);
+      const event = receipt.logs.find(e => e.topics[0] === eventTopic);
       if (!event) {
         throw new Error('No event');
       }
@@ -1127,13 +1211,19 @@ describe('QuestChain', () => {
       expect(decoded.questIdList).to.deep.equal(questIdList);
       expect(decoded.questDetails[0][0]).to.equal(questDetailsList[0].disabled);
       expect(decoded.questDetails[0][1]).to.equal(questDetailsList[0].optional);
-      expect(decoded.questDetails[0][2]).to.equal(questDetailsList[0].skipReview);
+      expect(decoded.questDetails[0][2]).to.equal(
+        questDetailsList[0].skipReview,
+      );
       expect(decoded.questDetails[1][0]).to.equal(questDetailsList[1].disabled);
       expect(decoded.questDetails[1][1]).to.equal(questDetailsList[1].optional);
-      expect(decoded.questDetails[1][2]).to.equal(questDetailsList[1].skipReview);
+      expect(decoded.questDetails[1][2]).to.equal(
+        questDetailsList[1].skipReview,
+      );
       expect(decoded.questDetails[2][0]).to.equal(questDetailsList[2].disabled);
       expect(decoded.questDetails[2][1]).to.equal(questDetailsList[2].optional);
-      expect(decoded.questDetails[2][2]).to.equal(questDetailsList[2].skipReview);
+      expect(decoded.questDetails[2][2]).to.equal(
+        questDetailsList[2].skipReview,
+      );
 
       expect((await questChain.questDetails(0)).disabled).to.equal(false);
       expect((await questChain.questDetails(0)).skipReview).to.equal(true);
@@ -1156,20 +1246,20 @@ describe('QuestChain', () => {
 
       await expect(tx)
         .to.emit(questChain, 'QuestProofsSubmitted')
-        .withArgs((await owner.getAddress()), questIdList, detailsList);
+        .withArgs(await owner.getAddress(), questIdList, detailsList);
 
       expect(
-        await questChain.questStatus((await owner.getAddress()), questIdList[0]),
+        await questChain.questStatus(await owner.getAddress(), questIdList[0]),
       ).to.equal(Status.pass);
     });
 
     it('should mint NFT with incomplete paused and optional quests', async () => {
-      expect(await questChain.questStatus((await owner.getAddress()), 1)).to.equal(
-        Status.init,
-      );
-      expect(await questChain.questStatus((await owner.getAddress()), 2)).to.equal(
-        Status.init,
-      );
+      expect(
+        await questChain.questStatus(await owner.getAddress(), 1),
+      ).to.equal(Status.init);
+      expect(
+        await questChain.questStatus(await owner.getAddress(), 2),
+      ).to.equal(Status.init);
 
       const tx = await questChain.mintToken();
       await tx.wait();
@@ -1181,9 +1271,9 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(questChainToken, 'TransferSingle')
         .withArgs(
-          (await questChain.getAddress()),
+          await questChain.getAddress(),
           ethers.ZeroAddress,
-          (await owner.getAddress()),
+          await owner.getAddress(),
           await questChain.questChainId(),
           1,
         );
@@ -1202,7 +1292,10 @@ describe('QuestChain', () => {
       ).wait();
 
       const tx = questChain.connect(signers[1]).mintToken();
-      await expect(tx).to.be.revertedWithCustomError(questChain, "NoSuccessfulReview");
+      await expect(tx).to.be.revertedWithCustomError(
+        questChain,
+        'NoSuccessfulReview',
+      );
     });
 
     it('should mintToken if even one quest is reviewed (if all quests are optional)', async () => {
@@ -1271,8 +1364,8 @@ describe('QuestChain', () => {
         limiterTokenGated
           .connect(signers[1])
           .addQuestChainDetails(
-            (await limiterChain.getAddress()),
-            (await limiterChain.getAddress()),
+            await limiterChain.getAddress(),
+            await limiterChain.getAddress(),
             0,
             0,
             '1',
@@ -1284,8 +1377,8 @@ describe('QuestChain', () => {
       const tx = await limiterTokenGated
         .connect(owner)
         .addQuestChainDetails(
-          (await limiterChain.getAddress()),
-          (await mockToken.getAddress()),
+          await limiterChain.getAddress(),
+          await mockToken.getAddress(),
           0,
           0,
           minBalance,
@@ -1296,44 +1389,51 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(limiterTokenGated, 'AddQuestChainDetails')
         .withArgs(
-          (await limiterChain.getAddress()),
-          (await mockToken.getAddress()),
+          await limiterChain.getAddress(),
+          await mockToken.getAddress(),
           minBalance,
-          (await owner.getAddress()),
+          await owner.getAddress(),
         );
 
       const questChainDetails = await limiterTokenGated.questChainDetails(
-        (await limiterChain.getAddress()),
+        await limiterChain.getAddress(),
       );
-      expect(questChainDetails.tokenAddress).to.equal((await mockToken.getAddress()));
+      expect(questChainDetails.tokenAddress).to.equal(
+        await mockToken.getAddress(),
+      );
       expect(questChainDetails.minTokenBalance).to.equal(minBalance);
     });
 
     it('setLimiter: revert when sender is not admin', async () => {
       await expect(
-        limiterChain.connect(signers[1]).setLimiter((await limiterTokenGated.getAddress())),
-      ).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+        limiterChain
+          .connect(signers[1])
+          .setLimiter(await limiterTokenGated.getAddress()),
+      ).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
     });
     it('setLimiter: works ', async () => {
       const tx = await limiterChain
         .connect(owner)
-        .setLimiter((await limiterTokenGated.getAddress()));
+        .setLimiter(await limiterTokenGated.getAddress());
 
       await tx.wait();
 
       await expect(tx)
         .to.emit(limiterChain, 'SetLimiter')
-        .withArgs((await limiterTokenGated.getAddress()));
+        .withArgs(await limiterTokenGated.getAddress());
 
       expect(await limiterChain.limiterContract()).to.equal(
-        (await limiterTokenGated.getAddress()),
+        await limiterTokenGated.getAddress(),
       );
     });
 
     it('submitProofs: revert when sender does not have minimum balance', async () => {
       (await limiterChain.createQuests([''])).wait();
 
-      await mockToken.setBalanceOf(signers[0].address, 9)
+      await mockToken.setBalanceOf(signers[0].address, 9);
       await expect(limiterChain.submitProofs(['0'], [''])).to.be.revertedWith(
         'LimiterTokenGated: limited',
       );
@@ -1365,11 +1465,11 @@ describe('QuestChain', () => {
         limiterTokenFee
           .connect(signers[1])
           .addQuestChainDetails(
-            (await limiterChain.getAddress()),
-            (await limiterChain.getAddress()),
+            await limiterChain.getAddress(),
+            await limiterChain.getAddress(),
             0,
             0,
-            (await limiterChain.getAddress()),
+            await limiterChain.getAddress(),
             '1',
           ),
       ).to.be.revertedWith('TokenGated: only admin');
@@ -1379,11 +1479,11 @@ describe('QuestChain', () => {
       const tx = await limiterTokenFee
         .connect(owner)
         .addQuestChainDetails(
-          (await limiterChain.getAddress()),
-          (await mockToken.getAddress()),
+          await limiterChain.getAddress(),
+          await mockToken.getAddress(),
           0,
           0,
-          (await treasury.getAddress()),
+          await treasury.getAddress(),
           feeAmount,
         );
 
@@ -1392,39 +1492,48 @@ describe('QuestChain', () => {
       await expect(tx)
         .to.emit(limiterTokenFee, 'AddQuestChainDetails')
         .withArgs(
-          (await limiterChain.getAddress()),
-          (await mockToken.getAddress()),
-          (await treasury.getAddress()),
+          await limiterChain.getAddress(),
+          await mockToken.getAddress(),
+          await treasury.getAddress(),
           feeAmount,
-          (await owner.getAddress()),
+          await owner.getAddress(),
         );
 
       const questChainDetails = await limiterTokenFee.questChainDetails(
-        (await limiterChain.getAddress()),
+        await limiterChain.getAddress(),
       );
-      expect(questChainDetails.tokenAddress).to.equal((await mockToken.getAddress()));
-      expect(questChainDetails.treasuryAddress).to.equal((await treasury.getAddress()));
+      expect(questChainDetails.tokenAddress).to.equal(
+        await mockToken.getAddress(),
+      );
+      expect(questChainDetails.treasuryAddress).to.equal(
+        await treasury.getAddress(),
+      );
       expect(questChainDetails.feeAmount).to.equal(feeAmount);
     });
 
     it('setLimiter: revert when sender is not admin', async () => {
       await expect(
-        limiterChain.connect(signers[1]).setLimiter((await limiterTokenFee.getAddress())),
-      ).to.be.revertedWithCustomError(chain, "AccessControlUnauthorizedAccount")
+        limiterChain
+          .connect(signers[1])
+          .setLimiter(await limiterTokenFee.getAddress()),
+      ).to.be.revertedWithCustomError(
+        chain,
+        'AccessControlUnauthorizedAccount',
+      );
     });
     it('setLimiter: works ', async () => {
       const tx = await limiterChain
         .connect(owner)
-        .setLimiter((await limiterTokenFee.getAddress()));
+        .setLimiter(await limiterTokenFee.getAddress());
 
       await tx.wait();
 
       await expect(tx)
         .to.emit(limiterChain, 'SetLimiter')
-        .withArgs((await limiterTokenFee.getAddress()));
+        .withArgs(await limiterTokenFee.getAddress());
 
       expect(await limiterChain.limiterContract()).to.equal(
-        (await limiterTokenFee.getAddress()),
+        await limiterTokenFee.getAddress(),
       );
     });
 
@@ -1432,14 +1541,13 @@ describe('QuestChain', () => {
       (await limiterChain.createQuests([''])).wait();
 
       console.log('mockToken', await mockToken.getAddress());
-      await expect(limiterChain.submitProofs(['0'], [''])).to.be.revertedWithCustomError(
-        limiterTokenFee,
-        'Limited',
-      );
+      await expect(
+        limiterChain.submitProofs(['0'], ['']),
+      ).to.be.revertedWithCustomError(limiterTokenFee, 'Limited');
     });
 
     it('submitProofs: works when sender has minimum balance or above', async () => {
-      await mockToken.approve((await limiterTokenFee.getAddress()), feeAmount);
+      await mockToken.approve(await limiterTokenFee.getAddress(), feeAmount);
       await mockToken.setBalanceOf(signers[0].address, feeAmount);
       (await limiterChain.submitProofs(['0'], [''])).wait();
     });

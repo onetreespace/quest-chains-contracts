@@ -19,17 +19,18 @@ import {QuestChainCommons} from "./libraries/QuestChainCommons.sol";
 /// @notice Factory contract for creating and managing quest chains.
 /// @dev This contract deploys new quest chain contracts and manages access control.
 contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
-
     /********************************
      STATE VARIABLES
      *******************************/
 
+    uint256 private constant ONE_DAY = 86400;
+
     /// @notice Immutable contract address for quest chain ERC1155 tokens.
-    // solhint-disable-next-line immutable-vars-naming
+    // solhint-disable-next-line style-guide-casing,immutable-vars-naming
     IQuestChainToken public immutable questChainToken;
-    
+
     /// @notice Immutable template contract address for quest chains.
-    // solhint-disable-next-line immutable-vars-naming
+    // solhint-disable-next-line style-guide-casing,immutable-vars-naming
     address public immutable questChainTemplate;
 
     /// @notice Counter for all quest chains.
@@ -37,14 +38,12 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
 
     /// @notice Admin address with access control privileges.
     address public admin;
-    
+
     /// @notice Proposed admin address awaiting approval.
     address public proposedAdmin;
-    
+
     /// @notice Timestamp of the last admin proposal.
     uint256 public adminProposalTimestamp;
-
-    uint256 private constant ONE_DAY = 86400;
 
     /********************************
      MAPPING STRUCTS EVENTS MODIFIER
@@ -183,4 +182,3 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
         questChainCount++;
     }
 }
-

@@ -48,14 +48,16 @@ library MultiToken {
      */
     error UnsupportedCategory(uint8 categoryValue);
 
-
     /**
      * transferAsset
      * @dev wrapping function for transfer calls on various token interfaces
      * @param _asset Struct defining all necessary context of a token
      * @param _dest Destination address
      */
-    function transferAsset(Asset memory _asset, address _dest) internal returns (bool) {
+    function transferAsset(
+        Asset memory _asset,
+        address _dest
+    ) internal returns (bool) {
         return _transferAssetFrom(_asset, address(this), _dest);
     }
 
@@ -169,58 +171,60 @@ library MultiToken {
      * @param _dest Destination address
      */
     function _transferAssetFrom(
-    Asset memory _asset,
-    address _source,
-    address _dest
-) private returns (bool) {
-    bool success;
-    bytes memory data;
+        Asset memory _asset,
+        address _source,
+        address _dest
+    ) private returns (bool) {
+        bool success;
+        bytes memory data;
 
-    if (_asset.category == Category.ERC20) {
-        // Call ERC20 transferFrom function
-        (success, data) = _asset.assetAddress.call(
-            abi.encodeWithSelector(
-                IERC20.transferFrom.selector,
-                _source,
-                _dest,
-                _asset.amount
-            )
-        );
+        if (_asset.category == Category.ERC20) {
+            // Call ERC20 transferFrom function
+            // solhint-disable-next-line avoid-low-level-calls
+            (success, data) = _asset.assetAddress.call(
+                abi.encodeWithSelector(
+                    IERC20.transferFrom.selector,
+                    _source,
+                    _dest,
+                    _asset.amount
+                )
+            );
 
-        // Check if the call was successful and that the data is either empty or decodes to true
-        return success && (data.length == 0 || abi.decode(data, (bool)));
-    } else if (_asset.category == Category.ERC721) {
-        // Call ERC721 safeTransferFrom function
-        (success, ) = _asset.assetAddress.call(
-           abi.encodeWithSignature(
-                "safeTransferFrom(address,address,uint256)",
-                _source,
-                _dest,
-                _asset.id,
-                ""
-            )
-        );
+            // Check if the call was successful and that the data is either empty or decodes to true
+            return success && (data.length == 0 || abi.decode(data, (bool)));
+        } else if (_asset.category == Category.ERC721) {
+            // Call ERC721 safeTransferFrom function
+            // solhint-disable-next-line avoid-low-level-calls
+            (success, ) = _asset.assetAddress.call(
+                abi.encodeWithSignature(
+                    "safeTransferFrom(address,address,uint256)",
+                    _source,
+                    _dest,
+                    _asset.id,
+                    ""
+                )
+            );
 
-        return success;
-    } else if (_asset.category == Category.ERC1155) {
-        uint256 amountToTransfer = _asset.amount == 0 ? 1 : _asset.amount;
+            return success;
+        } else if (_asset.category == Category.ERC1155) {
+            uint256 amountToTransfer = _asset.amount == 0 ? 1 : _asset.amount;
 
-        // Call ERC1155 safeTransferFrom function
-        (success, ) = _asset.assetAddress.call(
-            abi.encodeWithSelector(
-                IERC1155.safeTransferFrom.selector,
-                _source,
-                _dest,
-                _asset.id,
-                amountToTransfer,
-                ""
-            )
-        );
+            // Call ERC1155 safeTransferFrom function
+            // solhint-disable-next-line avoid-low-level-calls
+            (success, ) = _asset.assetAddress.call(
+                abi.encodeWithSelector(
+                    IERC1155.safeTransferFrom.selector,
+                    _source,
+                    _dest,
+                    _asset.id,
+                    amountToTransfer,
+                    ""
+                )
+            );
 
-        return success;
-    } else {
-        revert UnsupportedCategory(uint8(_asset.category));
+            return success;
+        } else {
+            revert UnsupportedCategory(uint8(_asset.category));
+        }
     }
-}
-
 }
