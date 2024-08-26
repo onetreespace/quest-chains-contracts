@@ -21,12 +21,11 @@ enum QuestStatus {
 /// @notice Structure for holding quest details.
 /// @dev Includes information about whether the quest is paused, optional, or can skip review.
 struct QuestDetails {
-    // uint256 order; // The order of the quest in the chain.
-    // bool assignment; // Indicates if the quest is an assignment.
-    // uint256[] requiredQuests; // List of quest IDs required to complete this quest.
+    uint256[] prereqQuests; // List of quest IDs required to complete this quest.
     bool disabled; // Indicates if the quest is paused.
     bool optional; // Indicates if the quest is optional.
     bool skipReview; // Indicates if the quest can skip the review process.
+    // bool assignment; // Indicates if the quest is an assignment.
 }
 
 /// @title IQuestChainFunctions
@@ -68,6 +67,7 @@ interface IQuestChainFunctions {
     /// @param _questIdList List of quest IDs for the quest submissions.
     /// @param _proofList List of off-chain proofs for each quest.
     function submitProofs(
+        address _quester,
         uint256[] calldata _questIdList,
         string[] calldata _proofList
     ) external;
@@ -186,6 +186,9 @@ interface IQuestChainSignals {
     /// @notice Emitted when the token URI for the QuestChain is updated.
     /// @param tokenURI The new off-chain token URI.
     event QuestChainTokenURIUpdated(string tokenURI);
+
+    /// @notice Error thrown when the quester has not completed the required quests before submitting proof.
+    error PrereqQuestsNotPassed(address _quester, uint256 _questId);
 
     /// @notice Error thrown when the sender is not the factory contract.
     error NotFactory();
