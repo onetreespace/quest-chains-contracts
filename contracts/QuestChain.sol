@@ -192,6 +192,7 @@ contract QuestChain is
                 revert QuestNotFound(_questIdList[i]);
 
             questDetails[_questIdList[i]] = QuestDetails(
+                _questDetails[i].order,
                 _questDetails[i].disabled,
                 _questDetails[i].optional,
                 _questDetails[i].skipReview

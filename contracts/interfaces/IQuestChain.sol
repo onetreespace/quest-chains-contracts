@@ -21,7 +21,7 @@ enum QuestStatus {
 /// @notice Structure for holding quest details.
 /// @dev Includes information about whether the quest is paused, optional, or can skip review.
 struct QuestDetails {
-    // uint256 order; // The order of the quest in the chain.
+    uint256 order; // The position at which the quest will be displayed in the UI, 0-indexed.
     // bool assignment; // Indicates if the quest is an assignment.
     // uint256[] requiredQuests; // List of quest IDs required to complete this quest.
     bool disabled; // Indicates if the quest is paused.
