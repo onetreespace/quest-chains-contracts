@@ -12,7 +12,6 @@
     "ecmaVersion": 12
   },
   "rules": {
-    // Auto-sort imports
     "sort-imports": "off",
     "import/order": "off",
     "simple-import-sort/imports": "error",

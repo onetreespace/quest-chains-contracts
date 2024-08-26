@@ -11,10 +11,11 @@ import {
   TREASURY_ADDRESS,
   validateSetup,
 } from './utils';
+import { ContractTransactionResponse } from 'ethers';
 
 async function main() {
-  const { chainId, deployer, address, balance } = await validateSetup();
-  if (!deployer.provider) {
+  const { chainId, address, balance } = await validateSetup();
+  if (!ethers.provider) {
     throw new Error('Provider not found for network');
   }
   const commitHash = execSync('git rev-parse --short HEAD', {
@@ -26,40 +27,44 @@ async function main() {
 
   const QuestChain = await ethers.getContractFactory('QuestChain', {});
   const questChain = (await QuestChain.deploy()) as QuestChain;
-  await questChain.deployed();
-  console.log('Template Address:', questChain.address);
+  await questChain.waitForDeployment()
+  console.log('Template Address:', await questChain.getAddress());
 
   const QuestChainFactory = await ethers.getContractFactory(
     'QuestChainFactory',
   );
   const questChainFactory = (await QuestChainFactory.deploy(
-    questChain.address,
+    await questChain.getAddress(),
     address,
-    TREASURY_ADDRESS[chainId],
-    PAYMENT_TOKEN[chainId],
-    DEFAULT_UPGRADE_FEE,
-  )) as QuestChainFactory;
-  await questChainFactory.deployed();
-  console.log('Factory Address:', questChainFactory.address);
+  )) as QuestChainFactory & { deploymentTransaction(): ContractTransactionResponse }
+  await questChainFactory.waitForDeployment();
+  console.log('Factory Address:', await questChainFactory.getAddress());
 
   const questChainTokenAddress = await questChainFactory.questChainToken();
   console.log('Token Address:', questChainTokenAddress);
 
-  const txHash = questChainFactory.deployTransaction.hash;
+  const txHash = questChainFactory.deploymentTransaction()?.hash;
+  if (!txHash) {
+    throw new Error('Transaction hash not found');
+  }
   console.log('Transaction Hash:', txHash);
-  const receipt = await deployer.provider.getTransactionReceipt(txHash);
+  const receipt = await ethers.provider.getTransactionReceipt(txHash);
+
+  if (!receipt) {
+    throw new Error('Transaction receipt not found');
+  }
   console.log('Block Number:', receipt.blockNumber);
 
-  const afterBalance = await deployer.provider.getBalance(address);
-  const gasUsed = balance.sub(afterBalance);
+  const afterBalance = await ethers.provider.getBalance(address);
+  const gasUsed = balance - (afterBalance);
   console.log(
     'Gas Used:',
-    ethers.utils.formatEther(gasUsed),
+    ethers.formatEther(gasUsed),
     NETWORK_CURRENCY[chainId],
   );
   console.log(
     'Account Balance:',
-    ethers.utils.formatEther(afterBalance),
+    ethers.formatEther(afterBalance),
     NETWORK_CURRENCY[chainId],
   );
 
@@ -70,9 +75,9 @@ async function main() {
   const deploymentInfo = {
     network: network.name,
     version: commitHash,
-    factory: questChainFactory.address,
+    factory: await questChainFactory.getAddress(),
     token: questChainTokenAddress,
-    template: questChain.address,
+    template: await questChain.getAddress(),
     txHash,
     blockNumber: receipt.blockNumber.toString(),
   };
@@ -84,19 +89,19 @@ async function main() {
 
   try {
     console.log('Waiting for contracts to be indexed...');
-    await questChainFactory.deployTransaction.wait(10);
+    await questChainFactory.deploymentTransaction()?.wait(10);
     console.log('Verifying Contracts...');
 
-    await run('verify:verify', {
-      address: questChain.address,
+    await run('verify', {
+      address: await questChain.getAddress(),
       constructorArguments: [],
     });
     console.log('Verified Template');
 
-    await run('verify:verify', {
-      address: questChainFactory.address,
+    await run('verify', {
+      address: await questChainFactory.getAddress(),
       constructorArguments: [
-        questChain.address,
+        await questChain.getAddress(),
         address,
         TREASURY_ADDRESS[chainId],
         PAYMENT_TOKEN[chainId],
@@ -105,7 +110,7 @@ async function main() {
     });
     console.log('Verified Factory');
 
-    await run('verify:verify', {
+    await run('verify', {
       address: questChainTokenAddress,
       constructorArguments: [],
     });

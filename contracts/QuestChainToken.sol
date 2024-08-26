@@ -6,52 +6,44 @@ pragma solidity ^0.8.26;
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
+import {ERC1155, IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
-import {IQuestChain} from "./interfaces/IQuestChain.sol";
 import {IQuestChainToken} from "./interfaces/IQuestChainToken.sol";
 import {IQuestChainFactory} from "./interfaces/IQuestChainFactory.sol";
 
-// author: @dan13ram
 
+/// @title QuestChainToken
+/// @notice ERC1155 token contract for QuestChain, designed to be non-transferable (SoulBound).
+/// @dev Manages quest token ownership and metadata.
 contract QuestChainToken is IQuestChainToken, ERC1155 {
-    // instantiate factory interface
+    /// @notice Immutable contract address for the quest chain factory.
+    // solhint-disable-next-line immutable-vars-naming
     IQuestChainFactory public immutable questChainFactory;
 
     /********************************
      MAPPING STRUCTS EVENTS MODIFIER
      *******************************/
 
-    // metadata uri for each token kind
+    /// @notice Metadata URI for each token kind.
     mapping(uint256 => string) private _tokenURIs;
 
-    // quest owner mapping
+    /// @notice Mapping from token ID to the owner address.
     mapping(uint256 => address) private _tokenOwners;
 
-    /**
-     * @dev Access control modifier for functions callable by factory contract only
-     */
+    /// @dev Access control modifier for functions callable by the factory contract only.
     modifier onlyFactory() {
-        require(
-            msg.sender == address(questChainFactory),
-            "QuestChainToken: not factory"
-        );
+        if (msg.sender != address(questChainFactory)) revert NotFactory();
         _;
     }
 
-    /**
-     * @dev Access control modifier for functions callable by token owners only
-     * @param _tokenId the complete initialization data
-     */
+    /// @dev Access control modifier for functions callable by token owners only.
+    /// @param _tokenId The quest token ID.
     modifier onlyTokenOwner(uint256 _tokenId) {
-        require(
-            msg.sender == _tokenOwners[_tokenId],
-            "QuestChainToken: not token owner"
-        );
+        if (msg.sender != _tokenOwners[_tokenId]) revert NotTokenOwner(_tokenId);
         _;
     }
 
+    /// @notice Constructor to set up the QuestChainToken contract.
     constructor() ERC1155("") {
         questChainFactory = IQuestChainFactory(msg.sender);
     }
@@ -60,70 +52,46 @@ contract QuestChainToken is IQuestChainToken, ERC1155 {
      ACCESS CONTROL FUNCTIONS
      *************************/
 
-    /**
-     * @dev Assigns quest chain ownership
-     * @param _tokenId the quest NFT identifier
-     * @param _questChain the address of the new QuestChain minimal proxy
-     */
+    /// @notice Assigns quest chain ownership.
+    /// @param _tokenId The quest NFT identifier.
+    /// @param _questChain The address of the new QuestChain minimal proxy.
     function setTokenOwner(
         uint256 _tokenId,
         address _questChain
     ) public onlyFactory {
-        // assign quest chain address as quest token's owner
         _tokenOwners[_tokenId] = _questChain;
     }
 
-    /**
-     * @dev Assigns the metadata location for a quest line
-     * @param _tokenId the quest NFT identifier
-     * @param _tokenURI the URI pointer for locating token metadata
-     */
+    /// @notice Assigns the metadata location for a quest line.
+    /// @param _tokenId The quest NFT identifier.
+    /// @param _tokenURI The URI pointer for locating token metadata.
     function setTokenURI(
         uint256 _tokenId,
         string memory _tokenURI
     ) public onlyTokenOwner(_tokenId) {
-        // assign metadata pointer to the tokenId
         _tokenURIs[_tokenId] = _tokenURI;
-
-        // log URI change and tokenId data
         emit URI(uri(_tokenId), _tokenId);
     }
 
-    /**
-     * @dev Mints a quest achievement token to the user
-     * @param _user the address of a successful questing user
-     * @param _tokenId the quest token identifier
-     */
+    /// @notice Mints a quest achievement token to the user.
+    /// @param _user The address of a successful questing user.
+    /// @param _tokenId The quest token identifier.
     function mint(
         address _user,
         uint256 _tokenId
     ) public onlyTokenOwner(_tokenId) {
-        // place user balance on the stack
-        uint256 userBalance = balanceOf(_user, _tokenId);
-
-        // enforce that user doesn't already possess the quest token
-        require(userBalance == 0, "QuestChainToken: already minted");
-
-        // mint the user their new quest achievement token
+        if (balanceOf(_user, _tokenId) != 0) revert AlreadyMinted();
         _mint(_user, _tokenId, 1, "");
     }
 
-    /**
-     * @dev Burns a quest achievement token from the user
-     * @param _user the address of a successful questing user
-     * @param _tokenId the quest token identifier
-     */
+    /// @notice Burns a quest achievement token from the user.
+    /// @param _user The address of a successful questing user.
+    /// @param _tokenId The quest token identifier.
     function burn(
         address _user,
         uint256 _tokenId
     ) public onlyTokenOwner(_tokenId) {
-        // place user balance on the stack
-        uint256 userBalance = balanceOf(_user, _tokenId);
-
-        // enforce that user owns exactly one quest token
-        require(userBalance == 1, "QuestChainToken: token not found");
-
-        // burn the user their new quest achievement token
+        if (balanceOf(_user, _tokenId) != 1) revert TokenNotFound();
         _burn(_user, _tokenId, 1);
     }
 
@@ -131,18 +99,16 @@ contract QuestChainToken is IQuestChainToken, ERC1155 {
      VIEW AND PURE FUNCTIONS
      *************************/
 
-    /**
-     * @dev Returns the owner address of a particular quest token
-     * @param _tokenId the quest token identifier
-     */
+    /// @notice Returns the owner address of a particular quest token.
+    /// @param _tokenId The quest token identifier.
+    /// @return The address of the token owner.
     function tokenOwner(uint256 _tokenId) public view returns (address) {
         return _tokenOwners[_tokenId];
     }
 
-    /**
-     * @dev Returns the metadata URI of a particular quest token
-     * @param _tokenId the quest token identifier
-     */
+    /// @notice Returns the metadata URI of a particular quest token.
+    /// @param _tokenId The quest token identifier.
+    /// @return The URI of the token.
     function uri(
         uint256 _tokenId
     )
@@ -158,27 +124,20 @@ contract QuestChainToken is IQuestChainToken, ERC1155 {
      OVERRIDES
      *************************/
 
-    /**
-     * @dev Prevents transferring the tokens and thus makes them SoulBound
-     */
-    function _beforeTokenTransfer(
-        address,
+    /// @dev Prevents transferring the tokens and thus makes them SoulBound.
+    function _update(
         address _from,
         address _to,
-        uint256[] memory,
-        uint256[] memory,
-        bytes memory
-    ) internal pure override {
-        require(
-            _to == address(0) || _from == address(0),
-            "QuestChainToken: soulbound"
-        );
+        uint256[] memory _ids,
+        uint256[] memory _values
+    ) internal override {
+        if (_to != address(0) && _from != address(0)) revert SoulBound();
+        super._update(_from, _to, _ids, _values);
     }
 
-    /**
-     * @dev Prevents approval of the tokens and thus makes them SoulBound
-     */
+    /// @dev Prevents approval of the tokens and thus makes them SoulBound.
     function _setApprovalForAll(address, address, bool) internal pure override {
-        revert("QuestChainToken: soulbound");
+        revert SoulBound();
     }
 }
+

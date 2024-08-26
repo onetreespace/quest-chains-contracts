@@ -9,6 +9,7 @@ pragma solidity ^0.8.26;
 import "../interfaces/ILimiter.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
 import {MultiToken, Category} from "../libraries/MultiToken.sol";
+import {console} from "hardhat/console.sol";
 
 /// @author @parv3213
 contract LimiterTokenFee is ILimiter {
@@ -32,6 +33,8 @@ contract LimiterTokenFee is ILimiter {
         uint256 _feeAmount,
         address _sender
     );
+
+    error Limited();
 
     function addQuestChainDetails(
         address _questChain,
@@ -67,13 +70,17 @@ contract LimiterTokenFee is ILimiter {
     ) external {
         QuestChainDetails memory _details = questChainDetails[msg.sender];
 
-        MultiToken
-            .Asset(
-                _details.tokenAddress,
-                _details.category,
-                _details.feeAmount,
-                _details.nftId
-            )
-            .transferAssetFrom(_sender, _details.treasuryAddress);
+        MultiToken.Asset memory _asset = MultiToken.Asset(
+            _details.tokenAddress,
+            _details.category,
+            _details.feeAmount,
+            _details.nftId
+        );
+
+
+        bool success = _asset.transferAssetFrom(_sender, _details.treasuryAddress);
+        if (!success) {
+            revert Limited();
+        }
     }
 }

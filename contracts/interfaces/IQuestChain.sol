@@ -220,9 +220,6 @@ interface IQuestChainSignals {
 
     /// @notice Error thrown when there are no successful reviews.
     error NoSuccessfulReview();
-
-    /// @notice Error thrown when the quest chain is already upgraded.
-    error AlreadyUpgraded();
 }
 
 /// @title IQuestChain
