@@ -49,8 +49,9 @@ contract QuestChain is
     /// @notice Address of the limiter contract, if any.
     address public limiterContract;
 
-    /// @notice Mapping from quest ID to quest details.
-    mapping(uint256 => QuestDetails) public questDetails;
+    /// @notice Array of quests.
+    QuestDetails[] public questDetails;
+
     /// @notice Mapping from user address to a mapping of quest ID to quest completion status.
     mapping(address => mapping(uint256 => QuestStatus)) private _questStatus;
 
@@ -67,6 +68,20 @@ contract QuestChain is
     /// @dev Modifier to allow function call only when the quest is valid.
     modifier validQuest(uint256 _questId) {
         if (_questId >= questCount) revert QuestNotFound(_questId);
+        _;
+    }
+
+    /// @dev Modifier to allow function call only when the quester has completed prerequisite quests.
+    modifier questerCanSubmit(address _quester, uint _questId) {
+        uint256[] memory prereqQuests = questDetails[_questId].prereqQuests;
+
+        if (prereqQuests.length > 0) {
+            for (uint256 i = 0; i < prereqQuests.length; i++) {
+                if (_questStatus[_quester][prereqQuests[i]] != QuestStatus.pass)
+                    revert PrereqQuestsNotPassed(_quester, _questId);
+            }
+        }
+
         _;
     }
 
@@ -193,6 +208,7 @@ contract QuestChain is
                 revert QuestNotFound(_questIdList[i]);
 
             questDetails[_questIdList[i]] = QuestDetails(
+                _questDetails[i].prereqQuests,
                 _questDetails[i].order,
                 _questDetails[i].disabled,
                 _questDetails[i].optional,
@@ -207,9 +223,11 @@ contract QuestChain is
     }
 
     /// @notice Submits proofs for completing particular quests in the quest chain.
+    /// @param _quester Address of the quester submitting the proof.
     /// @param _questIdList List of quest IDs for the quest submissions.
     /// @param _proofList List of off-chain proofs for each quest.
     function submitProofs(
+        address _quester,
         uint256[] calldata _questIdList,
         string[] calldata _proofList
     ) external whenNotPaused {
@@ -225,7 +243,7 @@ contract QuestChain is
         if (_loopLength != _proofList.length) revert InvalidParams();
 
         for (uint256 i; i < _loopLength; ) {
-            _submitProof(_questIdList[i]);
+            _submitProof(_quester, _questIdList[i]);
             unchecked {
                 ++i;
             }
@@ -359,7 +377,10 @@ contract QuestChain is
 
     /// @dev Internal function to submit proof for a quest.
     /// @param _questId The ID of the quest.
-    function _submitProof(uint256 _questId) internal validQuest(_questId) {
+    function _submitProof(
+        address _quester,
+        uint256 _questId
+    ) internal validQuest(_questId) questerCanSubmit(_quester, _questId) {
         if (questDetails[_questId].disabled) revert QuestDisabled(_questId);
         if (_questStatus[_msgSender()][_questId] == QuestStatus.pass)
             revert AlreadyPassed(_questId);
