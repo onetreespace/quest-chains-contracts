@@ -22,6 +22,8 @@ enum QuestStatus {
 /// @dev Includes information about whether the quest is paused, optional, or can skip review.
 struct QuestDetails {
     uint256[] prereqQuests; // List of quest IDs required to complete this quest.
+    uint256 order; // The position at which the quest will be displayed in the UI, 0-indexed.
+    // bool assignment; // Indicates if the quest is an assignment.
     bool disabled; // Indicates if the quest is paused.
     bool optional; // Indicates if the quest is optional.
     bool skipReview; // Indicates if the quest can skip the review process.
@@ -224,15 +226,10 @@ interface IQuestChainSignals {
 
     /// @notice Error thrown when there are no successful reviews.
     error NoSuccessfulReview();
-
-    /// @notice Error thrown when the quest chain is already upgraded.
-    error AlreadyUpgraded();
 }
 
 /// @title IQuestChain
 /// @notice Interface for managing quest chains, including creation, editing, submission, and review of quests.
 /// @dev This interface defines the core functions and events required for managing quests within a quest chain.
 // solhint-disable-next-line no-empty-blocks
-interface IQuestChain is IQuestChainFunctions, IQuestChainSignals {
-
-}
+interface IQuestChain is IQuestChainFunctions, IQuestChainSignals {}
