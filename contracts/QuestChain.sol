@@ -46,7 +46,7 @@ contract QuestChain is
     uint256 public questChainId;
     /// @notice Counter for all quests.
     uint256 public questCount;
-    /// @notice Address of the limiter contract, if any.
+    /// @notice Address of the limiter contracts, if any.
     address public limiterContract;
 
     /// @notice Mapping from quest ID to quest details.
@@ -303,6 +303,20 @@ contract QuestChain is
     /// @notice Burns the NFT from the sender.
     function burnToken() external {
         questChainToken.burn(_msgSender(), questChainId);
+    }
+
+    /// @notice Called when quester starts a quest chain.
+    /// @param _quester The address of the quester.
+    function startQuestChain(address _quester) external {
+        _questStatus[_quester][0] = QuestStatus.pass;
+    }
+
+    /// @notice Called when quester wants to reset their progress in the Quest chain.
+    /// @param _quester The address of the quester.
+    function resetQuestChainStatus(address _quester) external {
+        for (uint256 i = 0; i < questCount; i++) {
+            _questStatus[_quester][i] = QuestStatus.init;
+        }
     }
 
     /// @notice Gets the status of a quest for a specific quester.
