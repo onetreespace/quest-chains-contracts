@@ -46,7 +46,7 @@ contract QuestChain is
     uint256 public questChainId;
     /// @notice Counter for all quests.
     uint256 public questCount;
-    /// @notice Address of the limiter contracts, if any.
+    /// @notice Address of the limiter contract, if any.
     address public limiterContract;
 
     /// @notice Mapping from quest ID to quest details.
