@@ -1,7 +1,8 @@
 {
   "name": "@quest-chains/contracts",
+  "description": "Solidity smart contracts of the Quest Chains protocol.",
   "version": "0.1.0",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "scripts": {
     "clean": "hardhat clean",
     "compile": "hardhat compile",

@@ -1,0 +1,32 @@
+{
+  "name": "@quest-chains/contracts",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Solidity smart contracts of the Quest Chains protocol.",
+  "files": [
+    "**/*.sol",
+    "/build/contracts/*.json",
+    "!/mocks/**/*"
+  ],
+  "scripts": {
+    "prepack": "bash ../scripts/bash/prepack.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/quest-chains/contracts.git"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart",
+    "contracts",
+    "quest",
+    "chains",
+    "quest-chains"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/quest-chains/contracts/issues"
+  },
+  "homepage": "https://github.com/quest-chains/contracts"
+}

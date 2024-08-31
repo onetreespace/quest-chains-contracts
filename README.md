@@ -1,6 +1,6 @@
 # @quest-chains/contracts
 
-Try running some of the following tasks:
+Solidity smart contracts of the Quest Chains protocol.
 
 ```shell
 yarn compile
